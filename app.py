@@ -39,8 +39,8 @@ async def __(event: SendMessageEvent):
 
 
 #fastapi admintools
-@app.get("/items/")
-async def read_item(item_id):
+@app.get("/items")
+async def read_item():
     return requests.get('https://bbs-api.miyoushe.com/vila/api/bot/platform/getAllEmoticons').json()
 
 #vila listeners
