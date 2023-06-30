@@ -96,6 +96,7 @@ async def random_bottle()-> str:
     #随朶投瓶
     #1.get last_post
     last_post=db_settings.get('bottles:last_post')
+    item=None
     if not last_post:
         return '没有last_post，这可能说明数据库尚未初始化。'
     attempt=0
@@ -105,7 +106,7 @@ async def random_bottle()-> str:
     if not item:
         return '超过5次请求无数据，这可能说明Bottles过于稀疏'
     else:
-        return item['content']
+        return f'>>>{item["key"]}\n'+item['content']
     
 async def moderate_deny(bottle_key:str,reason:str,bot:Bot)->bool:
     #拒绝投稿
