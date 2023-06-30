@@ -45,6 +45,7 @@ async def read_item():
 #vila listeners
 
 if __name__ == "__main__":
+    
     bot.init_app(app)
-    uvicorn.run(app,port=int(os.environ.get('PORT',8000)),reload=True)    
+    uvicorn.run("__main__:app",port=int(os.environ.get('PORT',8000)),reload=True)    
     # 启动bot，注意，port端口号要和你的回调地址端口对上
