@@ -12,20 +12,20 @@ import random,requests
 _log=logging.getLogger('utils')
 
 async def put_bottle(evt:SendMessageEvent)->str:
-    #向unaudited_bottles投放漂流瓶等待审核
-    #1.检查是否有加入时长要求
-    # jointime_req=db_settings.get('bottles:jointime')
-    # if not jointime_req:
-    #     _log.warning('没有加入时长要求。生成一个默认要求')
-    #     db_settings.put({'desc':'漂流瓶的群加入时长要求(sec)','val':0},'bottles:jointime')
-    # else:
-    #     #get member jointime
-    #     member_jointime=await bot.get_member(evt.villa_id,evt.from_user_id)
-    #     member_jointime=member_jointime.joined_at
-    #     #compare join time req:
-    #     if int(time.time())-int(member_jointime)<int(jointime_req['val']):
-    #         _log.warning('用户加入时间过短。')
-    #         return '用户加入时间过短。更换服务器再试。'
+    向unaudited_bottles投放漂流瓶等待审核
+    1.检查是否有加入时长要求
+    jointime_req=db_settings.get('bottles:jointime')
+    if not jointime_req:
+        _log.warning('没有加入时长要求。生成一个默认要求')
+        db_settings.put({'desc':'漂流瓶的群加入时长要求(sec)','val':0},'bottles:jointime')
+    else:
+        #get member jointime
+        member_jointime=await bot.get_member(evt.villa_id,evt.from_user_id)
+        member_jointime=member_jointime.joined_at
+        #compare join time req:
+        if int(time.time())-int(member_jointime)<int(jointime_req['val']):
+            _log.warning('用户加入时间过短。')
+            return '用户加入时间过短。更换服务器再试。'
     #2.检查是否在黑名单
     if bl:=db_blacklist.get(f'U-{evt.from_user_id}'):
         _log.warning('用户在黑名单。')
