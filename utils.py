@@ -8,7 +8,7 @@ from villa.event import SendMessageEvent
 from villa import Bot
 import logging,time
 from typing import Tuple,List,Dict
-import random
+import random,requests
 _log=logging.getLogger('utils')
 
 async def put_bottle(evt:SendMessageEvent)->str:

@@ -6,7 +6,7 @@ import uvicorn
 import utils
 from deta import Deta
 import traceback
-import time
+import time,requests
 deta = Deta()
 erres=deta.Base('err')
 
@@ -16,30 +16,32 @@ bot = Bot(bot_id=os.environ.get('bot_id'), bot_secret=os.environ.get('bot_secret
 # 初始化Bot，填写你的bot_id、密钥以及回调地址endpoint
 # 举例：若申请时提供的回调地址为https://域名/callback，这里的callback_url就填`/callback`
 
-@bot.on_startswith("/ping")
+@bot.on_startswith("/ping",block=True)
 async def ___(event: SendMessageEvent):
 
-    await event.send('pong',mention_sender=True)
+    await event.send('pong')
+    return
     
-@bot.on_startswith("/扔漂流瓶")
+@bot.on_startswith("/扔漂流瓶",block=True)
 async def _(event: SendMessageEvent):        
     msg = await utils.put_bottle(event)
     await event.send(msg,mention_sender=True,quote_message=True)
-
+    return
     # 一个简单的处理函数，向你的Bot发送包含`hello`关键词的消息，它将会回复你`world`！
 
-@bot.on_startswith("/捡漂流瓶")
+@bot.on_startswith("/捡漂流瓶",block=True)
 async def __(event: SendMessageEvent):
 
     msg = await utils.random_bottle()
     await event.send(msg,mention_sender=True)
+    return
 
 
 
 #fastapi admintools
-@app.get("/items/{item_id}")
+@app.get("/items/")
 async def read_item(item_id):
-    return {"item_id": item_id}
+    return requests.get('https://bbs-api.miyoushe.com/vila/api/bot/platform/getAllEmoticons').json()
 
 #vila listeners
 
