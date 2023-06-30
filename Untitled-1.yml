@@ -1,0 +1,70 @@
+{
+        "event": {
+            "created_at": 1688006051814,
+            "extend_data": {
+                "EventData": {
+                    "EventData": {
+                        "content": {
+                            "content": {
+                                "entities": [
+                                    {
+                                        "entity": {
+                                            "bot_id": "bot_AZJvgYqPPjtUTk0nTttX",
+                                            "type": "mentioned_robot"
+                                        },
+                                        "length": 8,
+                                        "offset": 0
+                                    }
+                                ],
+                                "text": "@漂流瓶机器人 jhnhujhouhboihough"
+                            },
+                            "mentionedInfo": {
+                                "mentionedContent": "",
+                                "type": 2,
+                                "userIdList": [
+                                    "bot_AZJvgYqPPjtUTk0nTttX"
+                                ]
+                            },
+                            "user": {
+                                "alias": "",
+                                "extra": "{\"member_roles\":{\"name\":\"别野房东\",\"color\":\"#EB7F89\",\"web_color\":\"#E08F8F\"},\"state\":null}",
+                                "id": "389044414",
+                                "name": "IIlIIIIllllIIlllIlll",
+                                "portrait": "https://img-static.mihoyo.com/communityweb/upload/c9d11674eac7631d2210a1ba20799958.png",
+                                "portraitUri": "https://img-static.mihoyo.com/communityweb/upload/c9d11674eac7631d2210a1ba20799958.png"
+                            }
+                        },
+                        "from_user_id": 389044414,
+                        "msg_uid": "C90K-04FP-M9T9-EV21",
+                        "nickname": "IIlIIIIllllIIlllIlll",
+                        "object_name": 1,
+                        "room_id": 35407,
+                        "send_at": 1688006051814,
+                        "villa_id": 2201
+                    }
+                }
+            },
+            "id": "5a82da06-c0e9-8428-6714-d92896af2610",
+            "robot": {
+                "template": {
+                    "commands": [
+                        {
+                            "desc": "[匿名]投放漂流瓶",
+                            "name": "/扔漂流瓶"
+                        },
+                        {
+                            "desc": "拾取漂流瓶",
+                            "name": "/捡漂流瓶"
+                        }
+                    ],
+                    "desc": "简易漂流瓶机器人。",
+                    "icon": "https://webstatic.mihoyo.com/upload/static-resource/2023/06/25/7ac5c7d172f41cdf71afaa0d1f2ba036_1678628281839698169.png",
+                    "id": "bot_AZJvgYqPPjtUTk0nTttX",
+                    "name": "漂流瓶机器人"
+                },
+                "villa_id": 2201
+            },
+            "send_at": 1688006052,
+            "type": 2
+        }
+    }

@@ -1,0 +1,21 @@
+# Spacefile Docs: https://go.deta.dev/docs/spacefile/v0
+v: 0
+micros:
+  - name: mzltest-bottle-test
+    src: ./
+    engine: python3.9
+    primary: true
+    public: true
+    run: python app.py
+    dev: python app.py
+    presets:
+      env:
+        - name: bot_id
+          description: "mhy bot id"
+          default: ""
+        - name: bot_secret
+          description: "mhy bot secret"
+          default: ""
+        - name: bot_callback
+          description: "mhy bot callback"
+          default: ""
