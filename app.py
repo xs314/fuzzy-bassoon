@@ -17,24 +17,17 @@ bot = Bot(bot_id=os.environ.get('bot_id'), bot_secret=os.environ.get('bot_secret
 # 举例：若申请时提供的回调地址为https://域名/callback，这里的callback_url就填`/callback`
 
 @bot.on_startswith("/扔漂流瓶")
-async def _(event: SendMessageEvent):
-    try:
-        
-        msg = await utils.put_bottle(event)
-        await event.send(msg,mention_sender=True,quote_message=True)
-    except Exception as e:
-        erres.put({'err':traceback.format_exc(),"ts":int(time.time())})
-        await event.send(traceback.format_exc())
+async def _(event: SendMessageEvent):        
+    msg = await utils.put_bottle(event)
+    await event.send(msg,mention_sender=True,quote_message=True)
+
     # 一个简单的处理函数，向你的Bot发送包含`hello`关键词的消息，它将会回复你`world`！
 
 @bot.on_startswith("/捡漂流瓶")
 async def __(event: SendMessageEvent):
-    try:
-        msg = await utils.random_bottle()
-        await event.send(msg,mention_sender=True)
-    except Exception as e:
-        erres.put({'err':traceback.format_exc(),"ts":int(time.time())})
-        await event.send(traceback.format_exc())
+
+    msg = await utils.random_bottle()
+    await event.send(msg,mention_sender=True)
 
 #fastapi admintools
 @app.get("/items/{item_id}")
