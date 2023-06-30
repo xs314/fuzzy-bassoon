@@ -20,7 +20,7 @@ deta = Deta()
 
 app = FastAPI()
 
-bot = Bot(bot_id=os.environ.get('bot_id'), bot_secret=os.environ.get('bot_secret'), callback_url=os.environ.get('bot_callback'),wait_util_complete=True)
+bot = Bot(bot_id=os.environ.get('bot_id'), bot_secret=os.environ.get('bot_secret'), callback_url=os.environ.get('bot_callback'),wait_until_complete=True)
 # 初始化Bot，填写你的bot_id、密钥以及回调地址endpoint
 # 举例：若申请时提供的回调地址为https://域名/callback，这里的callback_url就填`/callback`
 
