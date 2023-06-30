@@ -37,7 +37,7 @@ async def put_bottle(evt:SendMessageEvent,bot:Bot)->str:
         #compare join time req:
         if int(time.time())-int(member_jointime)<int(jointime_req['val']):
             _log.warning('用户加入时间过短。')
-            return f"用户加入时间过短。更换服务器再试。此服务器你还需{(int(jointime_req['val'])-(int(time.time())-int(member_jointime)))/3600}小时才允许投稿。"
+            return f"用户加入时间过短，尝试更换别野。此别野你还需{round((int(jointime_req['val'])-(int(time.time())-int(member_jointime)))/3600,1)}小时才允许投稿。"
     #2.检查是否在黑名单
     if bl:=db_blacklist.get(f'U-{evt.from_user_id}'):
         _log.warning('用户在黑名单。')
