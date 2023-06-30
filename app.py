@@ -2,16 +2,24 @@ from villa import Bot
 from villa.event import SendMessageEvent
 import os
 from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
+
 import uvicorn
 import utils
 from deta import Deta
-import traceback
+
 import time,requests
+from pydantic import BaseModel
+from typing import Union
+from enum import Enum
+
+
+
 deta = Deta()
-erres=deta.Base('err')
 
 
 app = FastAPI()
+
 bot = Bot(bot_id=os.environ.get('bot_id'), bot_secret=os.environ.get('bot_secret'), callback_url=os.environ.get('bot_callback'))
 # 初始化Bot，填写你的bot_id、密钥以及回调地址endpoint
 # 举例：若申请时提供的回调地址为https://域名/callback，这里的callback_url就填`/callback`
@@ -35,14 +43,20 @@ async def fetch(event: SendMessageEvent):
     await event.send(msg,mention_sender=True)
     return
 
-
+class ModerateBody(BaseModel):
+    id:str
+    action:str
+    desc:str = None
 
 #fastapi admintools
-@app.get("/items")
-async def read_item():
-    return requests.get('https://bbs-api.miyoushe.com/vila/api/bot/platform/getAllEmoticons').json()
+@app.get("/admin/posts")
+async def read_posts(last:str,limit:int = 100):
+    return await utils.list_unmoderated_bottles(last,limit)
 
-#vila listeners
+@app.post('/admin/moderate')
+async def moderate(moderate_body: ModerateBody):
+    return await utils.moderate_bottle(moderate_body.id,moderate_body.action)
+app.mount("/admin", StaticFiles(directory="public"), name="public")
 
 if __name__ == "__main__":
     bot.init_app(app)

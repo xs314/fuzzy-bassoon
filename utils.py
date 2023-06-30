@@ -6,9 +6,21 @@ db_settings=deta.Base('settings')
 db_blacklist=deta.Base('blacklist')
 from villa.event import SendMessageEvent
 from villa import Bot
+from villa.message import *
 import logging,time
 from typing import Tuple,List,Dict
 import random,requests
+from pydantic import BaseModel
+
+class bottle_post(BaseModel):
+    content:str
+    from_user_id:int
+    from_vila_id:int
+    from_user_nick:str
+    from_room_id:int
+    send_at:int
+    msg_id:str
+
 _log=logging.getLogger('utils')
 
 async def put_bottle(evt:SendMessageEvent,bot:Bot)->str:
@@ -40,10 +52,11 @@ async def put_bottle(evt:SendMessageEvent,bot:Bot)->str:
     content=' '.join(evt.message.plain_text().split('/扔漂流瓶')[1].split(' ')[1])
     if not content:
         return '但是你什么也没说诶'
-    key=db_unaudited_bottles.put({'content':content,'from_user_id':evt.from_user_id,'from_user_nick':evt.nickname,'from_room_id':evt.room_id,'from_vila_id':evt.villa_id},expire_in=86400*7)['key']
+    data=bottle_post(content=content,from_user_id=evt.from_user_id,from_vila_id=evt.villa_id,from_user_nick=evt.nickname,from_room_id=evt.room_id,send_at=evt.send_at,msg_id=evt.msg_uid)
+    key=db_unaudited_bottles.put(data.dict(),expire_in=86400*7)['key']
     return f'投稿id:{key}'
 
-async def moderate_accept(bottle_key:str)->Tuple[bool,str]:
+async def moderate_accept(bottle_key:str,bot:Bot)->Tuple[bool,str]:
     #接收投稿并+1
     #0.do we have that key in unaudited?it should have but lets check
     post=db_unaudited_bottles.get(bottle_key)
@@ -73,6 +86,9 @@ async def moderate_accept(bottle_key:str)->Tuple[bool,str]:
     #2.post in bottles,bascially you delete the key and replace it with this_post in str
     #it with the new one
     db_unaudited_bottles.delete(bottle_key)
+
+    bpp=bottle_post.parse_obj(post)
+    bot.send_message(bpp.from_vila_id,bpp.from_room_id,'MHY:Text',Text(f'管理员接受了您的投稿#{post["key"]}').mention_user(bpp.from_vila_id,bpp.from_user_id).quote(bpp.msg_id,bpp.send_at))
     del post['key']
     db_bottles.put(post,this_post)
     return (True,this_post)
@@ -92,13 +108,19 @@ async def random_bottle()-> str:
     else:
         return item['content']
     
-async def moderate_deny(bottle_key:str)->bool:
+async def moderate_deny(bottle_key:str,reason:str,bot:Bot)->bool:
     #拒绝投稿
-    db_unaudited_bottles.delete(bottle_key)
+    if post:=db_unaudited_bottles.get(bottle_key):
+        bpp=bottle_post.parse_obj(post)
+        bot.send_message(bpp.from_vila_id,bpp.from_room_id,'MHY:Text',Text(f'管理员拒绝了您的投稿#{post["key"]}。理由如下：{reason}').mention_user(bpp.from_vila_id,bpp.from_user_id).quote(bpp.msg_id,bpp.send_at))
+
+        db_unaudited_bottles.delete(bottle_key)
+
     return True
     
 async def list_unmoderated_bottles(last:str,limit:int=100)->List[Dict]:
-    pass
+    return db_unaudited_bottles.fetch({},limit=limit,last=last)
+
 
 
 
