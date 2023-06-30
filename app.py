@@ -20,6 +20,8 @@ bot = Bot(bot_id=os.environ.get('bot_id'), bot_secret=os.environ.get('bot_secret
 async def ___(event: SendMessageEvent):
 
     await event.send('pong',mention_sender=True)
+    a=await bot.get_member(event.villa_id,event.from_user_id)
+    print(a)
 
 @bot.on_startswith("/扔漂流瓶")
 async def _(event: SendMessageEvent):        
