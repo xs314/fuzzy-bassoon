@@ -54,16 +54,16 @@ class ModerateBody(BaseModel):
 
 #fastapi admintools
 @app.get("/admin/api/posts")
-async def read_posts(last:str,limit:int = 100):
+async def read_posts(last=None,limit:int = 100):
     return await utils.list_unmoderated_bottles(last,limit)
 
 @app.post('/admin/api/moderate')
 async def moderate(moderate_body: ModerateBody):
     if moderate_body.action==actions.accept:
-        result=await utils.moderate_accept(moderate_body.key)
+        result=await utils.moderate_accept(moderate_body.key,bot)
         return {"ok":result}
     elif moderate_body.action==actions.deny:
-        result=await utils.moderate_deny(moderate_body.key,moderate_body.desc)
+        result=await utils.moderate_deny(moderate_body.key,moderate_body.desc,bot)
         return {"ok":result}
 
 app.mount("/admin", StaticFiles(directory="public"), name="public")

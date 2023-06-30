@@ -6,7 +6,7 @@ db_settings=deta.Base('settings')
 db_blacklist=deta.Base('blacklist')
 from villa.event import SendMessageEvent
 from villa import Bot
-from villa.message import *
+from villa.message import Message, MessageSegment
 import logging,time
 from typing import Tuple,List,Dict
 import random,requests
@@ -79,16 +79,16 @@ async def moderate_accept(bottle_key:str,bot:Bot)->bool:
             this_post=str(last_post['val']['last']+1)
         #save db_settings but we remove the kry of last_post to prevent ke collasion
         del last_post['key']
-        del last_post['__expires']
         db_settings.put(last_post,'bottles:last_post')
 
     #2.post in bottles,bascially you delete the key and replace it with this_post in str
     #it with the new one
     db_unaudited_bottles.delete(bottle_key)
 
-    bpp=bottle_post.parse_obj(post)
-    bot.send_message(bpp.from_vila_id,bpp.from_room_id,'MHY:Text',Text(f'管理员接受了您的投稿#{post["key"]}').mention_user(bpp.from_vila_id,bpp.from_user_id).quote(bpp.msg_id,bpp.send_at))
+    bpp=bottle_post(**post)
+    await bot.send(bpp.from_vila_id,bpp.from_room_id,(Message(f'管理员接受了您的投稿#{bottle_key}').mention_user(bpp.from_vila_id,bpp.from_user_id).quote(bpp.msg_id,bpp.send_at)))
     del post['key']
+    del post['__expires']
     db_bottles.put(post,this_post)
     return True
 
@@ -110,8 +110,9 @@ async def random_bottle()-> str:
 async def moderate_deny(bottle_key:str,reason:str,bot:Bot)->bool:
     #拒绝投稿
     if post:=db_unaudited_bottles.get(bottle_key):
-        bpp=bottle_post.parse_obj(post)
-        bot.send_message(bpp.from_vila_id,bpp.from_room_id,'MHY:Text',Text(f'管理员拒绝了您的投稿#{post["key"]}。理由如下：{reason}').mention_user(bpp.from_vila_id,bpp.from_user_id).quote(bpp.msg_id,bpp.send_at))
+        bpp=bottle_post(**post)
+
+        await bot.send(bpp.from_vila_id,bpp.from_room_id,(Message(f'管理员拒绝了您的投稿#{bottle_key}。理由如下：{reason}').mention_user(bpp.from_vila_id,bpp.from_user_id).quote(bpp.msg_id,bpp.send_at)))
 
         db_unaudited_bottles.delete(bottle_key)
 
