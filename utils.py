@@ -37,7 +37,7 @@ async def put_bottle(evt:SendMessageEvent,bot:Bot)->str:
         #compare join time req:
         if int(time.time())-int(member_jointime)<int(jointime_req['val']):
             _log.warning('用户加入时间过短。')
-            return '用户加入时间过短。更换服务器再试。'
+            return f"用户加入时间过短。更换服务器再试。此服务器你还需{(int(jointime_req['val'])-(int(time.time())-int(member_jointime)))/3600}小时才允许投稿。"
     #2.检查是否在黑名单
     if bl:=db_blacklist.get(f'U-{evt.from_user_id}'):
         _log.warning('用户在黑名单。')
@@ -56,13 +56,12 @@ async def put_bottle(evt:SendMessageEvent,bot:Bot)->str:
     key=db_unaudited_bottles.put(data.dict(),expire_in=86400*7)['key']
     return f'投稿id:{key}'
 
-async def moderate_accept(bottle_key:str,bot:Bot)->Tuple[bool,str]:
+async def moderate_accept(bottle_key:str,bot:Bot)->bool:
     #接收投稿并+1
     #0.do we have that key in unaudited?it should have but lets check
     post=db_unaudited_bottles.get(bottle_key)
     if not post:
-        return (False,'无此投稿')
-
+        return False
     #1.先去取last_post
     last_post=db_settings.get('bottles:last_post')
     if not last_post:
@@ -91,7 +90,7 @@ async def moderate_accept(bottle_key:str,bot:Bot)->Tuple[bool,str]:
     bot.send_message(bpp.from_vila_id,bpp.from_room_id,'MHY:Text',Text(f'管理员接受了您的投稿#{post["key"]}').mention_user(bpp.from_vila_id,bpp.from_user_id).quote(bpp.msg_id,bpp.send_at))
     del post['key']
     db_bottles.put(post,this_post)
-    return (True,this_post)
+    return True
 
 async def random_bottle()-> str:
     #随朶投瓶
@@ -118,7 +117,7 @@ async def moderate_deny(bottle_key:str,reason:str,bot:Bot)->bool:
 
     return True
     
-async def list_unmoderated_bottles(last:str,limit:int=100)->List[Dict]:
+async def list_unmoderated_bottles(last:str,limit:int=100):
     return db_unaudited_bottles.fetch({},limit=limit,last=last)
 
 
