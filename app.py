@@ -23,7 +23,7 @@ async def alive(event: SendMessageEvent):
     
 @bot.on_startswith("/扔漂流瓶")
 async def throw(event: SendMessageEvent):        
-    msg = await utils.put_bottle(event)
+    msg = await utils.put_bottle(event,bot)
     await event.send(msg,mention_sender=True,quote_message=True)
     return
     # 一个简单的处理函数，向你的Bot发送包含`hello`关键词的消息，它将会回复你`world`！

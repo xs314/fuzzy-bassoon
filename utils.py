@@ -11,9 +11,9 @@ from typing import Tuple,List,Dict
 import random,requests
 _log=logging.getLogger('utils')
 
-async def put_bottle(evt:SendMessageEvent)->str:
-    向unaudited_bottles投放漂流瓶等待审核
-    1.检查是否有加入时长要求
+async def put_bottle(evt:SendMessageEvent,bot:Bot)->str:
+    #向unaudited_bottles投放漂流瓶等待审核
+    #1.检查是否有加入时长要求
     jointime_req=db_settings.get('bottles:jointime')
     if not jointime_req:
         _log.warning('没有加入时长要求。生成一个默认要求')
