@@ -29,6 +29,11 @@ async def __(event: SendMessageEvent):
     msg = await utils.random_bottle()
     await event.send(msg,mention_sender=True)
 
+@bot.on_startswith("/ping")
+async def __(event: SendMessageEvent):
+
+    await event.send('pong',mention_sender=True)
+
 #fastapi admintools
 @app.get("/items/{item_id}")
 async def read_item(item_id):
