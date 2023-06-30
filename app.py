@@ -1,6 +1,5 @@
 from villa import Bot
 from villa.event import SendMessageEvent
-from villa.store import get_app
 import os
 from fastapi import FastAPI
 import uvicorn
@@ -46,7 +45,6 @@ async def read_item():
 #vila listeners
 
 if __name__ == "__main__":
-    app=get_app()
     bot.init_app(app)
-    uvicorn.run("__main__:app",port=int(os.environ.get('PORT',8000)),reload=True)    
+    uvicorn.run(app,port=int(os.environ.get('PORT',8000)))    
     # 启动bot，注意，port端口号要和你的回调地址端口对上
