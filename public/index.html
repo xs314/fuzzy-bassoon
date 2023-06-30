@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Tinder-like Card Interface</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            font-family: Arial, sans-serif;
+        }
+
+        .card-container {
+            position: relative;
+            width: 300px;
+            height: 400px;
+            background-color: #f5f5f5;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .card-content {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .card-buttons {
+            position: absolute;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .card-buttons button {
+            margin: 0 10px;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        .card-buttons button.accept {
+            background-color: #6ee686;
+            color: #fff;
+        }
+
+        .card-buttons button.deny {
+            background-color: #e66e6e;
+            color: #fff;
+        }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            visibility: hidden;
+        }
+
+        .modal {
+            width: 300px;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .modal h2 {
+            margin-top: 0;
+        }
+
+        .modal input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+        }
+
+        .modal button {
+            width: 100%;
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        .modal button.cancel {
+            background-color: #ccc;
+            color: #fff;
+        }
+    </style>
+</head>
+<body>
+    <div class="card-container">
+        <div class="card-content">
+            <span id="cardContent"></span>
+        </div>
+        <div class="card-buttons">
+            <button id="denyButton" class="deny">Deny</button>
+            <button id="acceptButton" class="accept">Accept</button>
+        </div>
+    </div>
+
+    <div class="modal-overlay">
+        <div class="modal">
+            <h2>Reason for Denial</h2>
+            <input type="text" id="reasonInput" placeholder="Enter reason">
+            <button id="submitReason">Submit</button>
+            <button id="cancelReason" class="cancel">Cancel</button>
+        </div>
+    </div>
+
+    <script>
+        // Mock API functions
+        function getPosts() {
+            // Make API call to retrieve posts
+            // Replace with your actual API call
+            return fetch('GET api/posts?limit=100')
+                .then(response => response.json())
+                .then(data => data.items);
+        }
+
+        function moderatePost(key, action, desc) {
+            // Make API call to moderate a post
+            // Replace with your actual API call
+            const body = {
+                key: key,
+                action: action,
+                desc: desc
+            };
+
+            return fetch('POST api/moderate', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(body)
+            });
+        }
+
+        // Global variables
+        let posts = [];
+        let currentIndex = 0;
+
+        // Card elements
+        const cardContent = document.getElementById('cardContent');
+        const denyButton = document.getElementById('denyButton');
+        const acceptButton = document.getElementById('acceptButton');
+
+        // Modal elements
+        const modalOverlay = document.querySelector('.modal-overlay');
+        const reasonInput = document.getElementById('reasonInput');
+        const submitReasonButton = document.getElementById('submitReason');
+        const cancelReasonButton = document.getElementById('cancelReason');
+
+        // Load initial posts
+        getPosts().then(data => {
+            posts = data;
+            showNextCard();
+        });
+
+        // Event listeners
+        denyButton.addEventListener('click', showDenialModal);
+        acceptButton.addEventListener('click', approvePost);
+        submitReasonButton.addEventListener('click', submitDenialReason);
+        cancelReasonButton.addEventListener('click', hideDenialModal);
+
+        document.addEventListener('keydown', function (event) {
+            if (event.key === 'ArrowLeft') {
+                showDenialModal();
+            } else if (event.key === 'ArrowRight') {
+                approvePost();
+            }
+        });
+
+        // Display the next card
+        function showNextCard() {
+            if (currentIndex < posts.length) {
+                cardContent.textContent = posts[currentIndex].content;
+                currentIndex++;
+            } else {
+                // No more cards, handle accordingly
+                console.log('No more cards to display.');
+            }
+        }
+
+        // Show the denial modal
+        function showDenialModal() {
+            modalOverlay.style.visibility = 'visible';
+        }
+
+        // Hide the denial modal
+        function hideDenialModal() {
+            modalOverlay.style.visibility = 'hidden';
+            reasonInput.value = '';
+        }
+
+        // Submit denial reason
+        function submitDenialReason() {
+            const reason = reasonInput.value.trim();
+            const currentItem = posts[currentIndex - 1];
+
+            if (reason !== '') {
+                moderatePost(currentItem.key, 'deny', reason)
+                    .then(() => {
+                        hideDenialModal();
+                        showNextCard();
+                    })
+                    .catch(error => {
+                        console.error('Failed to submit denial reason:', error);
+                    });
+            }
+        }
+
+        // Approve the post
+        function approvePost() {
+            const currentItem = posts[currentIndex - 1];
+
+            moderatePost(currentItem.key, 'accept', null)
+                .then(() => {
+                    showNextCard();
+                })
+                .catch(error => {
+                    console.error('Failed to approve post:', error);
+                });
+        }
+    </script>
+</body>
+</html>
