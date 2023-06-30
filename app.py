@@ -20,7 +20,7 @@ bot = Bot(bot_id=os.environ.get('bot_id'), bot_secret=os.environ.get('bot_secret
 async def ___(event: SendMessageEvent):
 
     await event.send('pong',mention_sender=True)
-    
+
 @bot.on_startswith("/扔漂流瓶")
 async def _(event: SendMessageEvent):        
     msg = await utils.put_bottle(event)
@@ -45,5 +45,5 @@ async def read_item(item_id):
 
 if __name__ == "__main__":
     bot.init_app(app)
-    uvicorn.run(app,port=int(os.environ.get('PORT',8000)))    
+    uvicorn.run(app,port=int(os.environ.get('PORT',8000)),log_level="DEBUG")    
     # 启动bot，注意，port端口号要和你的回调地址端口对上
