@@ -18,7 +18,7 @@ bot = Bot(bot_id=os.environ.get('bot_id'), bot_secret=os.environ.get('bot_secret
 
 @bot.on_startswith("ping",prefix='/')
 async def alive(event: SendMessageEvent):
-    await event.send('pong')
+    await event.send('pong',mention_sender=True)
     return
     
 @bot.on_startswith("扔漂流瓶",prefix='/')
