@@ -45,5 +45,5 @@ async def read_item(item_id):
 
 if __name__ == "__main__":
     bot.init_app(app)
-    uvicorn.run(app,port=int(os.environ.get('PORT',8000)),log_level="DEBUG")    
+    uvicorn.run(app,port=int(os.environ.get('PORT',8000)),log_level="debug")    
     # 启动bot，注意，port端口号要和你的回调地址端口对上
