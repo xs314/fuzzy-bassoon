@@ -16,6 +16,11 @@ bot = Bot(bot_id=os.environ.get('bot_id'), bot_secret=os.environ.get('bot_secret
 # 初始化Bot，填写你的bot_id、密钥以及回调地址endpoint
 # 举例：若申请时提供的回调地址为https://域名/callback，这里的callback_url就填`/callback`
 
+@bot.on_startswith("/ping")
+async def ___(event: SendMessageEvent):
+
+    await event.send('pong',mention_sender=True)
+    
 @bot.on_startswith("/扔漂流瓶")
 async def _(event: SendMessageEvent):        
     msg = await utils.put_bottle(event)
@@ -29,10 +34,7 @@ async def __(event: SendMessageEvent):
     msg = await utils.random_bottle()
     await event.send(msg,mention_sender=True)
 
-@bot.on_startswith("/ping")
-async def __(event: SendMessageEvent):
 
-    await event.send('pong',mention_sender=True)
 
 #fastapi admintools
 @app.get("/items/{item_id}")
