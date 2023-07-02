@@ -19,3 +19,6 @@ micros:
         - name: bot_callback
           description: "mhy bot callback"
           default: ""
+        - name: HCAPTCHA_SECRET
+          description : 'hc sec'
+          default: ""

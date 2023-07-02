@@ -4,13 +4,17 @@ db_bottles=deta.Base('bottles')
 db_unaudited_bottles=deta.Base('bottles_unaudited')
 db_settings=deta.Base('settings')
 db_blacklist=deta.Base('blacklist')
+db_cmd_state=deta.Base('cmd_state')
+from hashlib import sha1
 from villa.event import SendMessageEvent
 from villa import Bot
 from villa.message import Message, MessageSegment
 import logging,time
 from typing import Tuple,List,Dict
 import random,requests
+import base64
 from pydantic import BaseModel
+from models import Paper
 
 class bottle_post(BaseModel):
     content:str
@@ -123,6 +127,43 @@ async def list_unmoderated_bottles(last:str,limit:int=100):
     return db_unaudited_bottles.fetch({},limit=limit,last=last)
 
 
+def check_paper_validity(paper: Paper) -> Tuple[bool,str]:
+    # Check passCount constraint
+    total_questions = sum(len(group.questions) for group in paper.groups)
+    if paper.passCount > total_questions:
+        error_message = "passCount cannot be greater than the total number of questions in all question groups."
+        return [False,error_message]
+
+    # Check count and passCount constraints for each question group
+    for group in paper.groups:
+        if len(group.questions) < group.count:
+            error_message = f"count cannot be greater than the number of questions in the question group '{group.title}'."
+
+            return [False,error_message]
+        if group.count < group.passCount:
+            error_message = f"passCount cannot be greater than count in the question group '{group.title}'."
+            return [False,error_message]
+
+    # Check paperJSON size constraint
+    paper_json_size = len(paper.json())
+    if paper_json_size > 256 * 1024:
+        error_message = "paperJSON size exceeds the maximum allowed size of 256KB."
+        
+        return [False,error_message]
+
+    return [True,'']
 
 
 
+def put_cmd_state(ident:List,data:Dict,expire_in:int=3600)->str:
+    #put in command state by put sha1('-'.join(ident)) as key so the same list is the same key for receiving
+    #we also reserve a "m:state_data"=list for reference
+    key=base64.urlsafe_b64encode(sha1('_'.join(ident)).digest()).decode('utf-8')
+    db_cmd_state.put({'m:state_data':data,'data':data},key,expire_in=expire_in)
+    return key
+
+def get_cmd_state(ident:List)->Dict:
+    #get from command state by put sha1('-'.join(ident)) as key so the same list is the same key for receiving
+    #we also reserve a "m:state_data"=list for reference
+    key=base64.urlsafe_b64encode(sha1('_'.join(ident)).digest()).decode('utf-8')
+    return db_cmd_state.get(key)['data']

@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>试卷回答页面</title>
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <!-- hCaptcha Script -->
+    <script src="https://js.hcaptcha.com/1/api.js" async defer></script>
+    <!-- DOMPurify Script -->
+    <script src="https://cdn.jsdelivr.net/npm/dompurify@2.3.2/dist/purify.min.js"></script>
+</head>
+
+<body>
+    <div class="container">
+        <div class="row">
+            <div class="col-md-8 offset-md-2">
+                <h1 id="title"></h1>
+                <p id="paper-info"></p>
+                <p id="paper-desc"></p>
+                <div id="captcha-container"></div>
+                <button id="continue-btn" class="btn btn-primary" disabled>继续</button>
+            </div>
+        </div>
+    </div>
+    <div id="questions-container"></div>
+    <script>
+        // Get paper ID from URL parameter
+        const queryString = window.location.search;
+        const urlParams = new URLSearchParams(queryString);
+        const paperId = urlParams.get('paper_id');
+
+        // Function to sanitize HTML using DOMPurify
+        function sanitizeHTML(value) {
+            return DOMPurify.sanitize(value);
+        }
+
+        // Fetch paper details from the server
+        fetch(`/api/getPaper/${paperId}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.ok) {
+                    const title = sanitizeHTML(data.title);
+                    const passCount = data.passCount;
+                    const time = data.time;
+                    const desc = sanitizeHTML(data.desc);
+
+                    // Populate paper details on the page
+                    document.getElementById('title').innerText = title;
+                    document.getElementById('paper-info').innerText = `本试卷限时 ${time} 秒，答对 ${passCount} 题视为通过。试卷的来源可能要求更多限制条件。`;
+                    document.getElementById('paper-desc').innerHTML = desc;
+
+                    // Add hCaptcha widget
+                    hcaptcha.render('captcha-container', {
+                        sitekey: 'd554f7df-8a03-44cd-adad-4ea7b808b9bd',
+                        callback: function (token) {
+                            document.getElementById('continue-btn').disabled = false;
+                            document.getElementById('continue-btn').addEventListener('click', function () {
+                                continueButtonClicked(token);
+                            });
+                        }
+                    });
+                } else {
+                    alert(data.reason);
+                }
+            })
+            .catch(error => {
+                console.error(error);
+                alert('An error occurred while fetching the paper details.');
+            });
+var akey;
+akey=''
+        // Continue button click event handler
+        function continueButtonClicked(captchaToken) {
+            const requestBody = {
+                key: paperId,
+                captcha_token: captchaToken
+            };
+
+            // Fetch questions for the paper from the server
+            fetch('/api/getPaper', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(requestBody)
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.ok) {
+                        const questions = data.questions;
+                        akey = data.akey;
+                        // Store akey in a hidden field or a variable for later use
+
+                        // Display and process the questions
+                        processQuestions(questions);
+                        document.getElementById('continue-btn').disabled = true;
+                    } else {
+                        alert(data.reason);
+                    }
+                })
+                .catch(error => {
+                    console.error(error);
+                    alert('An error occurred while fetching the questions.');
+                });
+        }
+
+        // Function to process and display the questions
+        function processQuestions(questions) {
+            // Iterate over each question group
+            questions.forEach(group => {
+                const groupTitle = sanitizeHTML(group.title);
+                const groupDesc = sanitizeHTML(group.desc);
+                const passCount = group.passCount;
+                const groupQuestions = group.questions.map(question => sanitizeHTML(question));
+
+                // Create elements for the question group
+// 创建问题组容器元素，并添加样式类
+const groupContainer = document.createElement('div');
+groupContainer.classList.add('group-container', 'container', 'my-4');
+
+// 创建问题组标题元素，并添加样式类
+const groupTitleElement = document.createElement('h3');
+groupTitleElement.classList.add('group-title', 'mb-3');
+groupTitleElement.innerText = groupTitle;
+
+// 创建问题组描述元素，并添加样式类
+const groupDescElement = document.createElement('p');
+groupDescElement.classList.add('group-desc');
+groupDescElement.innerHTML = `<b>对于此问题组，要求正确回答${passCount}道题目。</b><br>${groupDesc}`;
+
+// 创建问题组问题容器元素，并添加样式类
+const groupQuestionsElement = document.createElement('div');
+groupQuestionsElement.classList.add('group-questions');
+
+// 将问题组标题、描述和问题容器元素添加到问题组容器中
+groupContainer.appendChild(groupTitleElement);
+groupContainer.appendChild(groupDescElement);
+groupContainer.appendChild(groupQuestionsElement);
+
+
+                // Add questions to the group
+                groupQuestions.forEach(question => {
+// 创建问题容器元素，并添加问题样式类
+const questionElement = document.createElement('div');
+questionElement.classList.add('question', 'my-3');
+
+// 创建问题文本元素，并添加文本样式类
+const questionTextElement = document.createElement('p');
+questionTextElement.classList.add('question-text');
+questionTextElement.innerHTML = sanitizeHTML(question);
+
+// 创建答案输入元素，并添加输入样式类
+const answerInput = document.createElement('input');
+answerInput.type = 'text';
+answerInput.classList.add('answer-input', 'form-control');
+
+// 将问题文本元素和答案输入元素添加到问题容器中
+questionElement.appendChild(questionTextElement);
+questionElement.appendChild(answerInput);
+
+                    groupQuestionsElement.appendChild(questionElement);
+                });
+
+                groupContainer.appendChild(groupTitleElement);
+                groupContainer.appendChild(groupDescElement);
+                groupContainer.appendChild(groupQuestionsElement);
+
+                // Append the group to the page
+                document.getElementById('questions-container').appendChild(groupContainer);
+            });
+
+            // Display submit button
+            const submitButton = document.createElement('button');
+            submitButton.innerText = '提交试卷';
+            submitButton.classList.add('btn', 'btn-primary');
+            submitButton.addEventListener('click', submitPaper);
+            document.getElementById('questions-container').appendChild(submitButton);
+        }
+
+        // Submit paper event handler
+        function submitPaper() {
+            // Collect user answers
+            const answers = [];
+            const groupContainers = document.querySelectorAll('.group-container');
+            groupContainers.forEach(groupContainer => {
+                const answerInputElements = groupContainer.querySelectorAll('.answer-input');
+                const groupAnswers = [];
+                answerInputElements.forEach(answerInput => {
+                    const answer = answerInput.value;
+                    groupAnswers.push(answer);
+                });
+                answers.push({ a: groupAnswers });
+            });
+
+            
+
+            const requestBody = {
+                akey: akey,
+                answers: answers
+            };
+
+            // Send answers to the server
+            fetch('/api/answerPaper', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(requestBody)
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.ok) {
+                        alert('试卷提交成功！');
+                        // Redirect or perform any other action upon successful submission
+                    } else {
+                        alert(data.reason);
+                    }
+                })
+                .catch(error => {
+                    console.error(error);
+                    alert('An error occurred while submitting the paper.');
+                });
+        }
+    </script>
+</body>
+
+</html>
