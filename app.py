@@ -235,7 +235,7 @@ async def setpaper(event: SendMessageEvent):
                 od=state['data']
                 od['joinTimeReq']=int(params)
                 utils.put_cmd_state(['setquizRole',event.villa_id],{'action':'new','step':3,'data':od})
-                await event.send('New:3->4 配置获取身份组所需的身份组id。'+roles_str,mention_sender=True,quote_message=True)
+                await event.send('New:3->4 配置获取身份组所需的身份组id。 '+roles_str,mention_sender=True,quote_message=True)
             elif state['step']==3 and params!='' and int(params)>=0:
                 od=state['data']
                 od['requiredRole']=int(params)
