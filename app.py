@@ -340,6 +340,8 @@ async def setRole(event: SendMessageEvent):
             if attempt['passed']:
                 try:
                     await bot.operate_member_to_role(event.villa_id,dat['successRole'],event.from_user_id,True)
+                    await event.send('身份组操作完成。',mention_sender=True,quote_message=True)
+                    return
                 except:
                     await event.send('身份组操作出现问题',mention_sender=True,quote_message=True)
                     return
