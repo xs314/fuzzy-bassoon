@@ -16,7 +16,7 @@
 <body>
     <div class="container">
         <div class="row">
-            <div class="col-md-8 offset-md-2">
+            <div class="">
                 <h1 id="title"></h1>
                 <p id="paper-info"></p>
                 <p id="paper-desc"></p>
@@ -74,6 +74,7 @@ var akey;
 akey=''
         // Continue button click event handler
         function continueButtonClicked(captchaToken) {
+            document.getElementById('continue-btn').disabled = true;
             const requestBody = {
                 key: paperId,
                 captcha_token: captchaToken
@@ -92,11 +93,15 @@ akey=''
                     if (data.ok) {
                         const questions = data.questions;
                         akey = data.akey;
+                        time=data.time
                         // Store akey in a hidden field or a variable for later use
-
+                        setInterval(()=>{
+                            newPageTitle = `${time--} s left`;
+                            document.title = newPageTitle;
+                        }, 1000)
                         // Display and process the questions
                         processQuestions(questions);
-                        document.getElementById('continue-btn').disabled = true;
+                        
                     } else {
                         alert(data.reason);
                     }
