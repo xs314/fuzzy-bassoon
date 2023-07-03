@@ -301,6 +301,9 @@ async def setRole(event: SendMessageEvent):
         if dat:=vilacfg['data'].get(attempt['paperId']):
             member=await bot.get_member(event.villa_id,event.from_user_id)
             member_jointime=member.joined_at
+            if dat['successRole'] in member.role_id_list:
+                await event.send('你已经在对应的身份组了，没有必要了。',mention_sender=True,quote_message=True)
+                return
         #compare join time req:
             if int(time.time())-int(member_jointime)<int(dat['joinTimeReq']):
                 await event.send(f"加入服务器时间过短.还需{round((int(dat['joinTimeReq'])-(int(time.time())-int(member_jointime)))/3600,1)}小时",mention_sender=True,quote_message=True)
