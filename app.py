@@ -302,7 +302,7 @@ async def setRole(event: SendMessageEvent):
             member=await bot.get_member(event.villa_id,event.from_user_id)
             member_jointime=member.joined_at
             if dat['successRole'] in member.role_id_list:
-                await event.send('你已经在对应的身份组了，没有必要了。',mention_sender=True,quote_message=True)
+                await event.send('你已经在对应的身份组了，没有必要了 ',mention_sender=True,quote_message=True)
                 return
         #compare join time req:
             if int(time.time())-int(member_jointime)<int(dat['joinTimeReq']):
