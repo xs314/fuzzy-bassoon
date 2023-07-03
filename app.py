@@ -291,6 +291,7 @@ async def setRole(event: SendMessageEvent):
         await event.send('你应该先获取一个akey，然后在这里作为参数使用。',mention_sender=True,quote_message=True)
         return
     attempt=db_attempts.get(params)
+    print(params)
     if not attempt:
         await event.send('找不到此回答。',mention_sender=True,quote_message=True)
         return
