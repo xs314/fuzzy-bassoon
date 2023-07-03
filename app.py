@@ -8,7 +8,7 @@ import uvicorn
 import utils
 from deta import Deta
 
-import time,requests,json,random
+import time,requests,json,random,secrets
 from pydantic import BaseModel
 from typing import Union
 from enum import Enum
@@ -59,180 +59,210 @@ async def setpaper(event: SendMessageEvent):
         await event.send('只有admin或owner允许使用此操作',mention_sender=True,quote_message=True)
     par=event.message.get_plain_text()
     params=' '.join(par.split('/setquizRole')[1].split(' ')[1:])
-    print(params)
+    print(params.split(' '))
+    state=utils.get_cmd_state(['setquizRole',event.villa_id])['data']
     #if params is a json,we read the attempts:int , joinTimeReq:int , requiredRole:int
-    try:
-        idata=json.loads(params)
-        sa={}
-        for data in idata:
-            title=data['title']
-            if not title:
-                await event.send('你应该为你的rule提供一个Title',mention_sender=True,quote_message=True)
-                return
-            attempts=int(data['attempts'])
-            joinTimeReq=int(data['joinTimeReq'])
-            requiredRole=int(data['requiredRole'])
-            successRole=int(data['successRole'])
-            paperID=data['paperId']
-            if not db_papers.get(paperID):
-                await event.send('这不是合法的paperID。你应该先去创建paper，然后使用你得到的id',mention_sender=True,quote_message=True)
-                return
-            #check do we have this role?
-            hasrole=0
-            roles_str=''
-            villa_roles=await bot.get_villa_member_roles(event.villa_id)
-            for i in villa_roles:
-                roles_str+=f'{i.id} = {i.name}\n'
-                if i.id==requiredRole:
-                    hasrole+=1
-                if i.id==successRole:
-                    hasrole+=1
-            if hasrole<2:
-                await event.send(f'没有这些roleid。你的服务器有以下身份组:\n{roles_str}',mention_sender=True,quote_message=True)
-                return
-            sa[paperID]={'title':title,'attempts':attempts,'joinTimeReq':joinTimeReq,'requiredRole':requiredRole,'successRole':successRole,'paperId':paperID}
-        db_vila_quizrole_cfg.put({'data':sa},str(event.villa_id))
-        await event.send('已设置',mention_sender=True,quote_message=True)
-    except json.JSONDecodeError:    
-        state=utils.get_cmd_state(['setquizRole',event.villa_id])['data']
+    if params!='' and params[0]=='{':
+        try:
+            idata=json.loads(params)
+            sa={}
+            for data in idata:
+                title=data['title']
+                if not title:
+                    await event.send('你应该为你的rule提供一个Title',mention_sender=True,quote_message=True)
+                    return
+                attempts=int(data['attempts'])
+                joinTimeReq=int(data['joinTimeReq'])
+                requiredRole=int(data['requiredRole'])
+                successRole=int(data['successRole'])
+                paperID=data['paperId']
+                if not db_papers.get(paperID):
+                    await event.send('这不是合法的paperID。你应该先去创建paper，然后使用你得到的id',mention_sender=True,quote_message=True)
+                    return
+                #check do we have this role?
+                hasrole=0
+                roles_str=''
+                villa_roles=await bot.get_villa_member_roles(event.villa_id)
+                for i in villa_roles:
+                    roles_str+=f'{i.id} = {i.name}\n'
+                    if i.id==requiredRole:
+                        hasrole+=1
+                    if i.id==successRole:
+                        hasrole+=1
+                if hasrole<2:
+                    await event.send(f'没有这些roleid。你的服务器有以下身份组:\n{roles_str}',mention_sender=True,quote_message=True)
+                    return
+                sa[paperID]={'title':title,'attempts':attempts,'joinTimeReq':joinTimeReq,'requiredRole':requiredRole,'successRole':successRole,'paperId':paperID}
+            db_vila_quizrole_cfg.put({'data':sa},str(event.villa_id))
+            await event.send('已设置',mention_sender=True,quote_message=True)
+            return
+        except json.JSONDecodeError:
+            pass  
+    elif params=='':  
+        
+        
         if params=='':
-            existing_cfg=db_vila_quizrole_cfg.get(str(event.villa_id))['data']
+            existing_cfg=db_vila_quizrole_cfg.get(str(event.villa_id))
             if not existing_cfg:
                 msg='没有已知的quizRole Config。如欲新建，使用/setquizRole new。'
             else:
+                existing_cfg=existing_cfg['data']
                 msg='以下是现有的config。/setquizRole (edit [ID][<br>key=val...]|new|del [ID])\n'
                 for n in existing_cfg.keys():
-                    msg+=f'#{n} {existing_cfg[n]}\n'
+                    msg+=f'#{n} {existing_cfg[n]["title"]}\n'
             await event.send(msg,mention_sender=True,quote_message=True)
             return
-        elif params=='new':
-            msg='New:0->1 你想如何称呼此规则？此值并没有实际作用，只是方便识别，new/del/edit是保留字。/setquizRole [input]'
-            utils.put_cmd_state(['setquizRole',event.villa_id],{'action':'new','step':0,'data':{}})
-            await event.send(msg,mention_sender=True,quote_message=True)
-        elif params.split(' ')[0]=='del' and params.split(' ')[1]!='':
-            if orig:=db_vila_quizrole_cfg.get(str(event.villa_id)):
-                if not orig['data'].get(params.split(' ')[1]):
-                    msg=f"没有此key"
-                    await event.send(msg,mention_sender=True,quote_message=True)
-                    return
-                del orig['data'][params.split(' ')[1]]
-                db_vila_quizrole_cfg.put(orig,str(event.villa_id))
-                utils.put_cmd_state(['setquizRole',event.villa_id],{'action':'','step':0,'data':{}}) #否则写回会有问题
-                await event.send('完成。',mention_sender=True,quote_message=True)
-            else:
-                await event.send('未配置。先new',mention_sender=True,quote_message=True)
+    
+    elif params=='new':
+        msg='New:0->1 你想如何称呼此规则？此值并没有实际作用，只是方便识别，new/del/edit是保留字。/setquizRole [input]'
+        utils.put_cmd_state(['setquizRole',event.villa_id],{'action':'new','step':0,'data':{}})
+        await event.send(msg,mention_sender=True,quote_message=True)
+    elif params.split(' ')[0]=='del' and params.split(' ')[1]!='':
+        if orig:=db_vila_quizrole_cfg.get(str(event.villa_id)):
+            if not orig['data'].get(params.split(' ')[1]):
+                msg=f"没有此key"
+                await event.send(msg,mention_sender=True,quote_message=True)
                 return
-        elif params.split(' ')[0]=='edit' and params.split(' ')[1]!='' and params.split('\n')>0:
-            if orig:=db_vila_quizrole_cfg.get(str(event.villa_id)):
+            del orig['data'][params.split(' ')[1]]
+            db_vila_quizrole_cfg.put(orig,str(event.villa_id))
+            utils.put_cmd_state(['setquizRole',event.villa_id],{'action':'','step':0,'data':{}}) #否则写回会有问题
+            await event.send('-完成。',mention_sender=True,quote_message=True)
+        else:
+            await event.send('未配置。先new',mention_sender=True,quote_message=True)
+            return
+    elif params.split(' ')[0]=='edit' and params.split(' ')[1]!='':
+        if orig:=db_vila_quizrole_cfg.get(str(event.villa_id)):
+            if not orig['data'].get(params.split('\n')[0].split(' ')[1]):
+                msg=f"e.没有此key"
+                await event.send(msg,mention_sender=True,quote_message=True)
+                return
+            print('==>',params.split('\n'))
+            if len(params.split('\n'))<2:
+                msg=f"{orig['data'].get(params.split(' ')[1])}\n以一个回车来开始key=value"
+                await event.send(msg,mention_sender=True,quote_message=True)
+                return
+            for line in params.split('\n')[1:]:
 
-                if not orig['data'].get(params.split(' ')[1]):
-                    msg=f"没有此key"
-                    await event.send(msg,mention_sender=True,quote_message=True)
-                    return
-                for line in params.split('\n')[1:]:
-                    key=line.split('=')[0]
-                    val=line.split('=')[1]
-                    villa_roles=await bot.get_villa_member_roles(event.villa_id)
-                    roles_str='你的服务器有以下几个身份组:\n'
-                    for i in villa_roles:
-                        roles_str+=f'{i.id} = {i.name}\n'
-                    #sa.append({'title':title,'attempts':attempts,'joinTimeReq':joinTimeReq,'requiredRole':requiredRole,'successRole':successRole,'paperId':paperID})
-                    if key=='title':
-                        if val=='':
-                            await event.send('你应该为你的rule提供一个Title',mention_sender=True,quote_message=True)
-                            return
-                        orig['data'][params.split(' ')[1]]['title']=val
-                    elif key=='attempts':
-                        if int(val)<0:
-                            await event.send('attempts的小于0视为0（不限制）',mention_sender=True,quote_message=True)
-                            orig['data'][params.split(' ')[1]]['attempts']=0
-                        else:
-                            orig['data'][params.split(' ')[1]]['attempts']=int(val)
-                    elif key=='joinTimeReq':
-                        if int(val)<0:
-                            await event.send('joinTimeReq的小于0视为0（不除制）',mention_sender=True,quote_message=True)
-                            orig['data'][params.split(' ')[1]]['joinTimeReq']=0
-                        else:
-                            orig['data'][params.split(' ')[1]]['joinTimeReq']=int(val)
-                    elif key=='requiredRole':
-                        hasRole=False
-                        for i in villa_roles:
-                            if i.id==int(val):
-                                hasRole=True
-                                break
-                        if not hasRole:
-                            await event.send(roles_str,mention_sender=True,quote_message=True)
-                            return
-                        orig['data'][params.split(' ')[1]]['requiredRole']=int(val)
-                    elif key=='successRole':
-                        hasRole=False
-                        for i in villa_roles:
-                            if i.id==int(val):
-                                hasRole=True
-                                break
-                        if not hasRole:
-                            await event.send(roles_str,mention_sender=True,quote_message=True)
-                            return
-                        orig['data'][params.split(' ')[1]]['successRole']=int(val)
-                    elif key=='paperId':
-                        if not db_papers.get(val):
-                            await event.send('这不是合法的paperID。你应该先去创建paper，然后使用你得到的id',mention_sender=True,quote_message=True)
-                            return
-                        orig['data'][params.split(' ')[1]]['paperId']=val
-                db_vila_quizrole_cfg.put(orig,str(event.villa_id))
-                await event.send('完成',mention_sender=True,quote_message=True)
-                return
-            else:
-                await event.send('未配置。先new',mention_sender=True,quote_message=True)
-                return
-        elif state:
-            villa_roles=await bot.get_villa_member_roles(event.villa_id)
-            roles_str='你的服务器有以下几个身份组:\n'
-            for i in villa_roles:
-                roles_str+=f'{i.id} = {i.name}\n'
-            if state['action']=='new':
+                key=line.split('=')[0]
+                val=line.split('=')[1]
+                villa_roles=await bot.get_villa_member_roles(event.villa_id)
+                roles_str='你的服务器有以下几个身份组:\n'
+                for i in villa_roles:
+                    roles_str+=f'{i.id} = {i.name}\n'
                 #sa.append({'title':title,'attempts':attempts,'joinTimeReq':joinTimeReq,'requiredRole':requiredRole,'successRole':successRole,'paperId':paperID})
-                if state['step']==0 and params!='':
-                    od=state['data']
-                    od['title']=params
-                    utils.put_cmd_state(['setquizRole',event.villa_id],{'action':'new','step':1,'data':od})
-                    await event.send('New:1->2 配置允许的尝试次数，超过此次数仍然可以答题，但将不会计入身份组。0=不限制。',mention_sender=True,quote_message=True)
-                    return
-                elif state['step']==1 and params!='' and int(params)>=0:
-                    od=state['data']
-                    od['attempts']=int(params)
-                    utils.put_cmd_state(['setquizRole',event.villa_id],{'action':'new','step':2,'data':od})
-                    await event.send('New:2->3 配置要求加入的时间，小于此时间仍然可以答题，但将不会计入身份组。0=不除制。',mention_sender=True,quote_message=True)
-                elif state['step']==2 and params!='' and int(params)>=0:
-                    od=state['data']
-                    od['joinTimeReq']=int(params)
-                    utils.put_cmd_state(['setquizRole',event.villa_id],{'action':'new','step':3,'data':od})
-                    await event.send('New:3->4 配置获取身份组所需的身份组id。0=不限制'+roles_str,mention_sender=True,quote_message=True)
-                elif state['step']==3 and params!='' and int(params)>=0:
-                    od=state['data']
-                    od['requiredRole']=int(params)
-                    utils.put_cmd_state(['setquizRole',event.villa_id],{'action':'new','step':4,'data':od})
-                    await event.send('New:4->5 配置获取成功的身份组id。0=不除制'+roles_str,mention_sender=True,quote_message=True)
-                elif state['step']==4 and params!='' and int(params)>=0:
-                    od=state['data']
-                    od['successRole']=int(params)
-                    utils.put_cmd_state(['setquizRole',event.villa_id],{'action':'new','step':5,'data':od})
-                    await event.send('New:5->6 配置paperID。',mention_sender=True,quote_message=True)
-                elif state['step']==5 and params!='':
-                    if not db_papers.get(params):
-                        await event.send('这不是合法的paperID。请重试。如果没有，你需要建一个',mention_sender=True,quote_message=True)
+                if key=='title':
+                    if val=='':
+                        await event.send('你应该为你的rule提供一个Title',mention_sender=True,quote_message=True)
                         return
-                    od=state['data']
-                    od['paperId']=params
-                    utils.put_cmd_state(['setquizRole',event.villa_id],{'action':'','step':0,'data':{}})
-                    #write back to append the cfg
-                    if not db_vila_quizrole_cfg.get(str(event.villa_id)):
-                        db_vila_quizrole_cfg.put({'data':{od['paperId']:od}},str(event.villa_id))
+                    orig['data'][params.split('\n')[0].split(' ')[1]]['title']=val
+                elif key=='attempts':
+                    if int(val)<0:
+                        await event.send('attempts的小于0视为0（不限制）',mention_sender=True,quote_message=True)
+                        orig['data'][params.split('\n')[0].split(' ')[1]]['attempts']=0
                     else:
-                        db_vila_quizrole_cfg.update({'data.'+od['paperId']:od},str(event.villa_id))
-                    await event.send('完成',mention_sender=True,quote_message=True)
+                        orig['data'][params.split('\n')[0].split(' ')[1]]['attempts']=int(val)
+                elif key=='joinTimeReq':
+                    if int(val)<0:
+                        await event.send('joinTimeReq的小于0视为0（不除制）',mention_sender=True,quote_message=True)
+                        orig['data'][params.split('\n')[0].split(' ')[1]]['joinTimeReq']=0
+                    else:
+                        orig['data'][params.split('\n')[0].split(' ')[1]]['joinTimeReq']=int(val)
+                elif key=='requiredRole':
+                    hasRole=False
+                    for i in villa_roles:
+                        if i.id==int(val):
+                            hasRole=True
+                            break
+                    if not hasRole:
+                        await event.send(roles_str,mention_sender=True,quote_message=True)
+                        return
+                    orig['data'][params.split('\n')[0].split(' ')[1]]['requiredRole']=int(val)
+                elif key=='successRole':
+                    hasRole=False
+                    for i in villa_roles:
+                        if i.id==int(val):
+                            hasRole=True
+                            break
+                    if not hasRole:
+                        await event.send(roles_str,mention_sender=True,quote_message=True)
+                        return
+                    orig['data'][params.split('\n')[0].split(' ')[1]]['successRole']=int(val)
+                elif key=='paperId':
+                    if not db_papers.get(val):
+                        await event.send('这不是合法的paperID。你应该先去创建paper，然后使用你得到的id',mention_sender=True,quote_message=True)
+                        return
+                    orig['data'][params.split('\n')[0].split(' ')[1]]['paperId']=val
+            db_vila_quizrole_cfg.put(orig,str(event.villa_id))
+            await event.send('>完成',mention_sender=True,quote_message=True)
+            return
+        else:
+            await event.send('未配置。先new',mention_sender=True,quote_message=True)
+            return
+    elif state and state['action']!='':
+
+        villa_roles=await bot.get_villa_member_roles(event.villa_id)
+        roles_str='\n你的服务器有以下几个身份组:\n'
+        for i in villa_roles:
+            roles_str+=f'{i.id} = {i.name}\n'
+        if state['action']=='new':
+            #sa.append({'title':title,'attempts':attempts,'joinTimeReq':joinTimeReq,'requiredRole':requiredRole,'successRole':successRole,'paperId':paperID})
+            if state['step']==0 and params!='':
+                od=state['data']
+                od['title']=params
+                utils.put_cmd_state(['setquizRole',event.villa_id],{'action':'new','step':1,'data':od})
+                await event.send('New:1->2 配置允许的尝试次数，超过此次数仍然可以答题，但将不会计入身份组。0=不限制。',mention_sender=True,quote_message=True)
+                return
+            elif state['step']==1 and params!='' and int(params)>=0:
+                od=state['data']
+                od['attempts']=int(params)
+                utils.put_cmd_state(['setquizRole',event.villa_id],{'action':'new','step':2,'data':od})
+                await event.send('New:2->3 配置要求加入的时间，小于此时间仍然可以答题，但将不会计入身份组。0=不除制。',mention_sender=True,quote_message=True)
+            elif state['step']==2 and params!='' and int(params)>=0:
+                od=state['data']
+                od['joinTimeReq']=int(params)
+                utils.put_cmd_state(['setquizRole',event.villa_id],{'action':'new','step':3,'data':od})
+                await event.send('New:3->4 配置获取身份组所需的身份组id。0=不限制'+roles_str,mention_sender=True,quote_message=True)
+            elif state['step']==3 and params!='' and int(params)>=0:
+                od=state['data']
+                od['requiredRole']=int(params)
+                inROle=False
+                for i in villa_roles:
+                    if int(params) == i.id:
+                        inROle=True
+                        break
+                if not inROle:
+                    await event.send('这不是合法的role',mention_sender=True,quote_message=True)
                     return
-                    
+                utils.put_cmd_state(['setquizRole',event.villa_id],{'action':'new','step':4,'data':od})
+                await event.send('New:4->5 配置获取成功的身份组id（就是说你要给什么身份组）'+roles_str,mention_sender=True,quote_message=True)
+            elif state['step']==4 and params!='' and int(params)>=0:
+                od=state['data']
+                od['successRole']=int(params)
+                inROle=False
+                for i in villa_roles:
+                    if int(params) == i.id:
+                        inROle=True
+                        break
+                if not inROle:
+                    await event.send('这不是合法的role',mention_sender=True,quote_message=True)
+                    return
+                utils.put_cmd_state(['setquizRole',event.villa_id],{'action':'new','step':5,'data':od})
+                await event.send('New:5->6 配置paperID。',mention_sender=True,quote_message=True)
+            elif state['step']==5 and params!='':
+                if not db_papers.get(params):
+                    await event.send('这不是合法的paperID。请重试。如果没有，你需要建一个',mention_sender=True,quote_message=True)
+                    return
+                od=state['data']
+                od['paperId']=params
+                utils.put_cmd_state(['setquizRole',event.villa_id],{'action':'','step':0,'data':{}})
+                #write back to append the cfg
+                if not db_vila_quizrole_cfg.get(str(event.villa_id)):
+                    db_vila_quizrole_cfg.put({'data':{od['paperId']:od}},str(event.villa_id))
+                else:
+                    db_vila_quizrole_cfg.update({'data.'+od['paperId']:od},str(event.villa_id))
+                await event.send('.完成',mention_sender=True,quote_message=True)
+                return
+                
 
 
 #fastapi admintools
@@ -254,8 +284,9 @@ async def newPaper(paper:models.Paper):
     checkres=utils.check_paper_validity(paper)
     if not checkres[0]:
         return {"ok":False,"reason":checkres[1]}
-    res=db_papers.put(paper.json())['key']
-    return {"ok":True,"key":res}
+    passwd=secrets.token_urlsafe()
+    res=db_papers.put({"value":paper.json(),"pass":passwd})['key']
+    return {"ok":True,"key":res,"pass":passwd}
 
 @app.get('/api/getPaper/{paper_id}')
 async def read_paper_basic(paper_id):
@@ -333,6 +364,12 @@ async def answer(paper:models.PaperAnswer):
     db_attempts.update({"passed":passed,"reason":reason,"submit":True},paper.akey)
     return {'ok':True,'akey':paper.akey} #we 
 
+@app.post('/api/getPaperEdit')
+async def edit_getp(paper:models.EditPaperRequest):
+    if dt:=db_papers.get(paper.key):
+        if paper.passwd==dt['pass']:
+            return {'ok':True,'value':dt['value']}
+    return {'ok':False,'reason':'no such paper or bad passwd'}
 
 
 app.mount("/bvs85wi1qfb6o1eyrpqv3", StaticFiles(directory="admin_pub"), name="public")

@@ -40,3 +40,7 @@ class GroupAnswers(BaseModel):
 class PaperAnswer(BaseModel):
     akey:str
     answers:List[GroupAnswers]
+
+class EditPaperRequest(BaseModel):
+    key:str
+    passwd:str

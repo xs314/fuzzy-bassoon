@@ -213,7 +213,7 @@ questionElement.appendChild(answerInput);
                 .then(response => response.json())
                 .then(data => {
                     if (data.ok) {
-                        alert('试卷提交成功！');
+                        prompt('使用此key来换取身份组',data.akey);
                         // Redirect or perform any other action upon successful submission
                     } else {
                         alert(data.reason);

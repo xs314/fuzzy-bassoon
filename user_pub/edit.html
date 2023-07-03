@@ -37,8 +37,9 @@
 
     <button class="btn btn-primary mt-3" onclick="addGroup()">添加问题组</button>
 
-    <button class="btn btn-success mt-3" onclick="exportPaper()">导出试卷</button>
+    <button class="btn btn-success mt-3" onclick="exportPaper(false)">导出试卷</button>
     <button class="btn btn-info mt-3" onclick="importPaper()">导入试卷</button>
+    <button class="btn btn-warning mt-3" onclick="exportPaper(true)">仅导出json（不提交）</button>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/sceditor@3/minified/sceditor.min.js"></script>
@@ -147,8 +148,8 @@
       const paper = {
         title: document.getElementById('title').value,
         desc: document.getElementById('desc')._sceditor.val(),
-        passCount: parseInt(document.getElementById('passCount').value),
-        time: parseInt(document.getElementById('time').value),
+        passCount: Number(document.getElementById('passCount').value)??0,
+        time: Number(document.getElementById('time').value),
         groups: []
       };
 
@@ -157,8 +158,8 @@
         const group = {
           title: groupDiv.querySelector('#group-title').value,
           desc: groupDiv.querySelector('#group-desc')._sceditor.val(),
-          count: parseInt(groupDiv.querySelector('#group-count').value),
-          passCount: parseInt(groupDiv.querySelector('#group-passCount').value),
+          count: Number(groupDiv.querySelector('#group-count').value),
+          passCount: Number(groupDiv.querySelector('#group-passCount').value),
           questions: []
         };
 
@@ -187,15 +188,81 @@
     .then(response => response.json())
     .then(data => {
       if (data.ok) {
-        prompt('Key', data.key);
+        prompt('试卷id，在机器人场景下使用', data.key);
+        prompt('编辑密码，仅分享给信任用户，否则他人可以查看完整试卷', data.pass);
       } else {
         alert(data.reason);
       }
     })
     .catch(error => {
+      prompt('上传失败，这是原始json数据',paperJSON);
       console.error('Error:', error);
     });
-        prompt('json数据',paperJSON);
+        
+      }else{
+
+      }
+      //validateJSON
+
+      // Perform further actions with the JSON, such as sending it to the server or saving it locally.
+    }
+ function exportPaper(json_only=false) {
+      const paper = {
+        title: document.getElementById('title').value,
+        desc: document.getElementById('desc')._sceditor.val(),
+        passCount: Number(document.getElementById('passCount').value)??0,
+        time: Number(document.getElementById('time').value),
+        groups: []
+      };
+
+      const groupDivs = document.querySelectorAll('#group-container > .card');
+      groupDivs.forEach(groupDiv => {
+        const group = {
+          title: groupDiv.querySelector('#group-title').value,
+          desc: groupDiv.querySelector('#group-desc')._sceditor.val(),
+          count: Number(groupDiv.querySelector('#group-count').value),
+          passCount: Number(groupDiv.querySelector('#group-passCount').value),
+          questions: []
+        };
+
+        const questionDivs = groupDiv.querySelectorAll('#question-container > .mb-3');
+        questionDivs.forEach(questionDiv => {
+          const question = {
+            q: questionDiv.querySelector('#question')._sceditor.val(),
+            a: questionDiv.querySelector('#answer').value
+          };
+
+          group.questions.push(question);
+        });
+
+        paper.groups.push(group);
+      });
+
+      const paperJSON = JSON.stringify(paper);
+      if(validatePaperJSON(paperJSON)){
+        if (json_only){prompt('原始json:',paperJSON);
+      return}
+        fetch('/api/newPaper', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: paperJSON
+  })
+    .then(response => response.json())
+    .then(data => {
+      if (data.ok) {
+        prompt('试卷id，在机器人场景下使用', data.key);
+        prompt('编辑密码，仅分享给信任用户，否则他人可以查看完整试卷', data.pass);
+      } else {
+        alert(data.reason);
+      }
+    })
+    .catch(error => {
+      prompt('上传失败，这是原始json数据',paperJSON);
+      console.error('Error:', error);
+    });
+        
       }else{
 
       }
@@ -204,9 +271,31 @@
       // Perform further actions with the JSON, such as sending it to the server or saving it locally.
     }
 
-    function importPaper() {
-      const paperJSON = prompt('请输入试卷的JSON数据');
+
+
+ async   function importPaper() {
+       paperJSON = prompt('请输入试卷的JSON数据或id#密码形式的上传数据');
       if (paperJSON) {
+        if (paperJSON[0]!='{' && paperJSON.split('#').length>1){
+          dt=await fetch('/api/getPaperEdit', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({key:paperJSON.split('#')[0],passwd:paperJSON.split('#')[1]})
+  })
+    data=await dt.json()
+
+
+      if (data.ok) {
+        paperJSON=data.value
+      } else {
+        alert(data.reason);
+        return
+      }
+    
+
+        }
         try {
           const paper = JSON.parse(paperJSON);
 
