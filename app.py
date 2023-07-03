@@ -59,6 +59,7 @@ async def setpaper(event: SendMessageEvent):
             break
     if not is_admin:
         await event.send('只有admin或owner允许使用此操作',mention_sender=True,quote_message=True)
+        return
     par=event.message.get_plain_text()
     params=' '.join(par.split('/setquizRole')[1].split(' ')[1:])
     print(params.split(' '))
@@ -459,7 +460,7 @@ async def answer(paper:models.PaperAnswer):
     elif passed!=False:
         passed=True
         reason='global count satisfied with no group failed'
-    db_attempts.update({"passed":passed,"reason":reason,"submit":True},paper.akey)
+    db_attempts.update({"passed":passed,"reason":reason,"submit":True,"user_answer":paper.answers},paper.akey)
     return {'ok':True,'akey':paper.akey} #we 
 
 @app.post('/api/getPaperEdit')
