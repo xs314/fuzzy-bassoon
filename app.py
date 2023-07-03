@@ -287,7 +287,7 @@ async def setpaper(event: SendMessageEvent):
                 
 @bot.on_startswith("redeemquizRole",prefix='/')
 async def setRole(event: SendMessageEvent):
-    params=' '.join(event.message.get_plain_text().split('/redeemquizRole')[1].split(' ')[1:])
+    params=event.message.get_plain_text().split('/redeemquizRole')[1].split(' ')[1]
     if not params:
         await event.send('你应该先获取一个akey，然后在这里作为参数使用。',mention_sender=True,quote_message=True)
         return
@@ -448,7 +448,7 @@ async def answer(paper:models.PaperAnswer):
                 gcorr+=1
                 correct_ans+=1
             else:
-                print(f'{a}!={res["answers"][i][j]}')
+                print(f'Group{i}:{a}!={res["answers"][i][j]}')
         if res['questions'][i]['passCount']>gcorr:
             reason=f'Group#{i} passCount not satisfied,expecting {res["questions"][i]["passCount"]},got {gcorr}'
             passed=False
