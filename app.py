@@ -447,6 +447,8 @@ async def answer(paper:models.PaperAnswer):
             if a==res['answers'][i][j]:
                 gcorr+=1
                 correct_ans+=1
+            else:
+                print(f'{a}!={res["answers"][i][j]}')
         if res['questions'][i]['passCount']>gcorr:
             reason=f'Group#{i} passCount not satisfied,expecting {res["questions"][i]["passCount"]},got {gcorr}'
             passed=False
