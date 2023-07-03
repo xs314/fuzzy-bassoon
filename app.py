@@ -460,7 +460,7 @@ async def answer(paper:models.PaperAnswer):
     elif passed!=False:
         passed=True
         reason='global count satisfied with no group failed'
-    db_attempts.update({"passed":passed,"reason":reason,"submit":True,"user_answer":paper.dict({'include':'answers'})},paper.akey)
+    db_attempts.update({"passed":passed,"reason":reason,"submit":True,"user_answer":paper.dict(include='answers')},paper.akey)
     return {'ok':True,'akey':paper.akey} #we 
 
 @app.post('/api/getPaperEdit')
