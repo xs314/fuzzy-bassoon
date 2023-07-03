@@ -57,7 +57,7 @@ async def setpaper(event: SendMessageEvent):
             break
     if not is_admin:
         await event.send('只有admin或owner允许使用此操作',mention_sender=True,quote_message=True)
-    par=event.message.plain_text()
+    par=event.message.get_plain_text()
     params=' '.join(par.split('/setquizRole')[1].split(' ')[1:])
     print(params)
     #if params is a json,we read the attempts:int , joinTimeReq:int , requiredRole:int

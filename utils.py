@@ -53,7 +53,7 @@ async def put_bottle(evt:SendMessageEvent,bot:Bot)->str:
     #3.投稿
     # put an item to unaudited with ttl of 7 days,content is /扔漂流瓶 <content> 
     # so content is basically can be get with split msg.text by / and by space and joining the space
-    par=evt.message.plain_text()
+    par=evt.message.get_plain_text()
     content=' '.join(par.split('/扔漂流瓶')[1].split(' ')[1:])
     if not content:
         return '但是你什么也没说诶'
