@@ -36,10 +36,10 @@
     <div id="group-container"></div>
 
     <button class="btn btn-primary mt-3" onclick="addGroup()">添加问题组</button>
-
-    <button class="btn btn-success mt-3" onclick="exportPaper(false)">导出试卷</button>
+    <button class="btn btn-warning mt-3" onclick="exportPaper(true)">导出试卷</button>
     <button class="btn btn-info mt-3" onclick="importPaper()">导入试卷</button>
-    <button class="btn btn-warning mt-3" onclick="exportPaper(true)">仅导出json（不提交）</button>
+    <button class="btn btn-success mt-3" onclick="exportPaper(false)">提交试卷</button>
+    
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/sceditor@3/minified/sceditor.min.js"></script>
@@ -242,6 +242,32 @@
       if(validatePaperJSON(paperJSON)){
         if (json_only){prompt('原始json:',paperJSON);
       return}
+        okey=prompt('更新已有id，输入id#pass组合，否则留空。')
+        if(okey==null){return}
+        if (okey!='' &&okey.split('#').length>1){
+          fetch(`/api/editPaper/${okey.split('#')[0]}/${okey.split('#')[1]}`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: paperJSON
+  })
+    .then(response => response.json())
+    .then(data => {
+      if (data.ok) {
+        prompt('试卷id，在机器人场景下使用', data.key);
+      } else {
+        alert(data.reason);
+      }
+    })
+    .catch(error => {
+      prompt('上传失败，这是原始json数据',paperJSON);
+      console.error('Error:', error);
+    });
+        return
+        }
+
+
         fetch('/api/newPaper', {
     method: 'POST',
     headers: {

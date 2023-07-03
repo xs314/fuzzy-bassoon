@@ -19,6 +19,7 @@ deta = Deta()
 db_papers=deta.Base('papers')
 db_attempts=deta.Base('attempts')
 db_vila_quizrole_cfg=deta.Base('vila_quizrole_cfg')
+db_vila_user_role_attempts=deta.Base('vila_user_role_att')
 
 app = FastAPI()
 
@@ -263,6 +264,72 @@ async def setpaper(event: SendMessageEvent):
                 await event.send('.完成',mention_sender=True,quote_message=True)
                 return
                 
+@bot.on_startswith("redeemquizRole",prefix='/')
+async def setRole(event: SendMessageEvent):
+    params=' '.join(event.message.get_plain_text().split('/redeemquizRole')[1].split(' ')[1:])
+    if not params:
+        await event.send('你应该先获取一个akey，然后在这里作为参数使用。',mention_sender=True,quote_message=True)
+        return
+    attempt=db_attempts.get(params)
+    if not attempt:
+        await event.send('找不到此回答。',mention_sender=True,quote_message=True)
+        return
+    if attempt['used']:
+        await event.send('此回答已被使用。',mention_sender=True,quote_message=True)
+        return
+    if vilacfg:=db_vila_quizrole_cfg.get(str(event.villa_id)):
+        if dat:=vilacfg['data'].get(attempt['paperId']):
+            member=await bot.get_member(event.villa_id,event.from_user_id)
+            member_jointime=member.joined_at
+        #compare join time req:
+            if int(time.time())-int(member_jointime)<int(dat['joinTimeReq']):
+                await event.send(f"加入服务器时间过短.还需{round((int(dat['joinTimeReq'])-(int(time.time())-int(member_jointime)))/3600,1)}小时",mention_sender=True,quote_message=True)
+                return
+        #comapre has role
+            if dat['requiredRole']!=0:
+                if dat['requiredRole'] not in member.role_id_list:
+                    villa_roles=await bot.get_villa_member_roles(event.villa_id)
+                    roles_str=''
+                    for i in villa_roles:
+                        roles_str+=f'{i.id} = {i.name}\n'
+                    await event.send(f"不符合身份组要求。需要的身份组：{dat['requiredRole']},附身份组对照:\n{roles_str}",mention_sender=True,quote_message=True)
+                    return
+            ident=f'{event.villa_id}_{event.from_user_id}'
+            if att:=db_vila_user_role_attempts.get(ident):
+               if qatts:=att.get(attempt['paperId']):
+                    if dat['attempts']!=0 and len(qatts)>=dat['attempts']:
+                       await event.send('超出最大尝试次数',mention_sender=True,quote_message=True)
+                       return
+                    db_vila_user_role_attempts.update({attempt['paperId']:db_vila_user_role_attempts.util.append({"ts":int(time.time()),'akey':params})},ident)
+                    qatts=len(qatts)+1
+               else:
+                   db_vila_user_role_attempts.update({attempt['paperId']:[{'ts':int(time.time()),'akey':params}]},ident)
+                   qatts=1
+            else:
+                db_vila_user_role_attempts.put({attempt['paperId']:[{'ts':int(time.time()),'akey':params}]},ident)
+                qatts=1
+            if dat['attempts']!=0 and qatts>dat['attempts']:
+                await event.send('超出最大尝试次数',mention_sender=True,quote_message=True)
+                return
+            db_attempts.update({'used':True},params)
+            if attempt['passed']:
+                try:
+                    await bot.operate_member_to_role(event.villa_id,dat['successRole'],event.from_user_id,True)
+                except:
+                    await event.send('身份组操作出现问题',mention_sender=True,quote_message=True)
+                    return
+            else:
+                await event.send('考卷未通过。',mention_sender=True,quote_message=True)
+                return
+                
+        else:
+            await event.send('没有这个quizRole。',mention_sender=True,quote_message=True)
+            return
+    else:
+        await event.send('还没设置过quizRole。',mention_sender=True,quote_message=True)
+        return
+        
+    
 
 
 #fastapi admintools
@@ -330,7 +397,7 @@ async def read_item(paper:models.PaperRequest):
         data['questions']=ques
         questions.append(data)
         answers.append(anss)
-    key=db_attempts.put({"questions":questions,"answers":answers,"paperId":paper.key,'title':res.title,'desc':res.desc,'passCount':res.passCount,"time":res.time,"ts":int(time.time()),'submit':False,"passed":False})['key']
+    key=db_attempts.put({"questions":questions,"answers":answers,"paperId":paper.key,'title':res.title,'desc':res.desc,'passCount':res.passCount,"time":res.time,"ts":int(time.time()),'submit':False,"passed":False,"used":False})['key']
     return {"ok":True,"questions":questions,'title':res.title,'desc':res.desc,'passCount':res.passCount,"time":res.time,'akey':key}
 
 @app.post('/api/answerPaper')
@@ -369,6 +436,17 @@ async def edit_getp(paper:models.EditPaperRequest):
     if dt:=db_papers.get(paper.key):
         if paper.passwd==dt['pass']:
             return {'ok':True,'value':dt['value']}
+    return {'ok':False,'reason':'no such paper or bad passwd'}
+
+@app.post('/api/editPaper/{pid}/{pwd}')
+async def newPaper(paper:models.Paper,pid:str,pwd:str):
+    checkres=utils.check_paper_validity(paper)
+    if not checkres[0]:
+        return {"ok":False,"reason":checkres[1]}
+    if dt:=db_papers.get(pid):
+        if pwd==dt['pass']:
+            db_papers.update({"value":paper.json()},pid)
+            return {"ok":True,"key":pid}
     return {'ok':False,'reason':'no such paper or bad passwd'}
 
 
