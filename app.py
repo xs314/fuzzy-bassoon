@@ -85,6 +85,8 @@ async def setpaper(event: SendMessageEvent):
                 roles_str=''
                 villa_roles=await bot.get_villa_member_roles(event.villa_id)
                 for i in villa_roles:
+                    if i.role_type=="MEMBER_ROLE_TYPE_ALL_MEMBER":
+                        continue
                     roles_str+=f'{i.id} = {i.name}\n'
                     if i.id==requiredRole:
                         hasrole+=1
@@ -149,6 +151,8 @@ async def setpaper(event: SendMessageEvent):
                 villa_roles=await bot.get_villa_member_roles(event.villa_id)
                 roles_str='你的服务器有以下几个身份组:\n'
                 for i in villa_roles:
+                    if i.role_type=="MEMBER_ROLE_TYPE_ALL_MEMBER":
+                        continue
                     roles_str+=f'{i.id} = {i.name}\n'
                 #sa.append({'title':title,'attempts':attempts,'joinTimeReq':joinTimeReq,'requiredRole':requiredRole,'successRole':successRole,'paperId':paperID})
                 if key=='title':
@@ -171,6 +175,11 @@ async def setpaper(event: SendMessageEvent):
                 elif key=='requiredRole':
                     hasRole=False
                     for i in villa_roles:
+                        if int(val)==0:
+                            hasRole=True
+                            break
+                        if i.role_type=="MEMBER_ROLE_TYPE_ALL_MEMBER":
+                            continue
                         if i.id==int(val):
                             hasRole=True
                             break
@@ -181,6 +190,8 @@ async def setpaper(event: SendMessageEvent):
                 elif key=='successRole':
                     hasRole=False
                     for i in villa_roles:
+                        if i.role_type=="MEMBER_ROLE_TYPE_ALL_MEMBER":
+                            continue
                         if i.id==int(val):
                             hasRole=True
                             break
@@ -204,6 +215,8 @@ async def setpaper(event: SendMessageEvent):
         villa_roles=await bot.get_villa_member_roles(event.villa_id)
         roles_str='\n你的服务器有以下几个身份组:\n'
         for i in villa_roles:
+            if i.role_type=="MEMBER_ROLE_TYPE_ALL_MEMBER":
+                continue
             roles_str+=f'{i.id} = {i.name}\n'
         if state['action']=='new':
             #sa.append({'title':title,'attempts':attempts,'joinTimeReq':joinTimeReq,'requiredRole':requiredRole,'successRole':successRole,'paperId':paperID})
@@ -228,6 +241,11 @@ async def setpaper(event: SendMessageEvent):
                 od['requiredRole']=int(params)
                 inROle=False
                 for i in villa_roles:
+                    if int(params)==0:
+                        inROle=True
+                        break
+                    if i.role_type=="MEMBER_ROLE_TYPE_ALL_MEMBER":
+                        continue
                     if int(params) == i.id:
                         inROle=True
                         break
@@ -241,6 +259,8 @@ async def setpaper(event: SendMessageEvent):
                 od['successRole']=int(params)
                 inROle=False
                 for i in villa_roles:
+                    if i.role_type=="MEMBER_ROLE_TYPE_ALL_MEMBER":
+                        continue
                     if int(params) == i.id:
                         inROle=True
                         break
@@ -291,6 +311,8 @@ async def setRole(event: SendMessageEvent):
                     villa_roles=await bot.get_villa_member_roles(event.villa_id)
                     roles_str=''
                     for i in villa_roles:
+                        if i.role_type=="MEMBER_ROLE_TYPE_ALL_MEMBER":
+                            continue
                         roles_str+=f'{i.id} = {i.name}\n'
                     await event.send(f"不符合身份组要求。需要的身份组：{dat['requiredRole']},附身份组对照:\n{roles_str}",mention_sender=True,quote_message=True)
                     return
