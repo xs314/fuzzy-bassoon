@@ -159,12 +159,12 @@ def check_paper_validity(paper: Paper) -> Tuple[bool,str]:
 def put_cmd_state(ident:List,data:Dict,expire_in:int=3600)->str:
     #put in command state by put sha1('-'.join(ident)) as key so the same list is the same key for receiving
     #we also reserve a "m:state_data"=list for reference
-    key=base64.urlsafe_b64encode(sha1('_'.join(ident)).digest()).decode('utf-8')
+    key=base64.urlsafe_b64encode(sha1(str(ident).encode('utf-8')).digest()).decode('utf-8')
     db_cmd_state.put({'m:state_data':data,'data':data},key,expire_in=expire_in)
     return key
 
 def get_cmd_state(ident:List)->Dict:
     #get from command state by put sha1('-'.join(ident)) as key so the same list is the same key for receiving
     #we also reserve a "m:state_data"=list for reference
-    key=base64.urlsafe_b64encode(sha1('_'.join(ident)).digest()).decode('utf-8')
+    key=base64.urlsafe_b64encode(sha1(str(ident).encode('utf-8')).digest()).decode('utf-8')
     return db_cmd_state.get(key)['data']
