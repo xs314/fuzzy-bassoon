@@ -136,7 +136,7 @@
         function getPosts() {
             // Make API call to retrieve posts
             // Replace with your actual API call
-            return fetch('api/posts?limit=100')
+            return fetch('api/posts?limit=1000')
                 .then(response => response.json())
                 .then(data => data._items);
         }
@@ -207,7 +207,7 @@
                 currentIndex++;
             } else {
                 // No more cards, handle accordingly
-                console.log('No more cards to display.');
+                alert('No more cards to display.');
             }
         }
 
