@@ -385,7 +385,7 @@ async def newPaper(paper:models.Paper):
     cmpressed=paper.json()
     size=len(cmpressed.encode('utf-8'))
     if size>=384*1024:
-        return {"ok":False,"reason":"paper too large"}
+        return {"ok":False,"reason":"paper too large."}
     res=db_papers.put({"value":cmpressed,"pass":passwd})['key']
     return {"ok":True,"key":res,"pass":passwd,"usage":(size/384*1024)}
 
