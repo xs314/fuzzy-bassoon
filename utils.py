@@ -107,7 +107,7 @@ async def random_bottle()-> str:
     else:
         if 'image_url' in item and item['image_url']!='':
             return Message(f'>>>{item["key"]}\n{item["content"]}').image(item['image_url'])
-        return Message(f'>>>{item["key"]}\nitem["content"]')
+        return Message(f'>>>{item["key"]}\n{item["content"]}')
     
 async def moderate_deny(bottle_key:str,reason:str,bot:Bot)->bool:
     #拒绝投稿
