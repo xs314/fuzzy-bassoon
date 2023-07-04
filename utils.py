@@ -75,8 +75,10 @@ async def moderate_accept(bottle_key:str,bot:Bot)->bool:
             this_post=str(last_post['val']['spare'].pop())
         else:
             this_post=str(last_post['val']['last']+1)
+            last_post['val']['last']=int(this_post)
         #save db_settings but we remove the kry of last_post to prevent ke collasion
         del last_post['key']
+        print(last_post)
         db_settings.put(last_post,'bottles:last_post')
 
     #2.post in bottles,bascially you delete the key and replace it with this_post in str
