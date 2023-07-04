@@ -387,7 +387,7 @@ async def newPaper(paper:models.Paper):
     if size>=384*1024:
         return {"ok":False,"reason":"paper too large."}
     res=db_papers.put({"value":cmpressed,"pass":passwd})['key']
-    return {"ok":True,"key":res,"pass":passwd,"usage":(size/384*1024)}
+    return {"ok":True,"key":res,"pass":passwd,"usage":(size/(384*1024))}
 
 @app.get('/api/getPaper/{paper_id}')
 async def read_paper_basic(paper_id):
@@ -486,7 +486,7 @@ async def newPaper(paper:models.Paper,pid:str,pwd:str):
             if size>=384*1024:
                 return {"ok":False,"reason":"paper too large"}
             db_papers.update({"value":cmpressed},pid)
-            return {"ok":True,"key":pid,'usage':(size/384*1024)}
+            return {"ok":True,"key":pid,'usage':(size/(384*1024))}
     return {'ok':False,'reason':'no such paper or bad passwd'}
 
 
