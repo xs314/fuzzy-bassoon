@@ -22,12 +22,3 @@ micros:
         - name: HCAPTCHA_SECRET
           description : 'hc sec'
           default: ""
-        - name: s_ckey
-          description : 'solvemedia ckey(temp)'
-          default: ""
-        - name: s_vkey
-          description : 'solvemedia vkey(temp)'
-          default: ""
-        - name: s_hkey
-          description : 'solvemedia hkey(temp)'
-          default: ""

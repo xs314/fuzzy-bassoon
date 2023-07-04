@@ -13,7 +13,6 @@ import time,requests,json,random,secrets,hashlib
 from pydantic import BaseModel
 from typing import Union
 from enum import Enum
-import libsolvemedia
 
 deta = Deta()
 db_papers=deta.Base('papers')
@@ -491,14 +490,17 @@ async def newPaper(paper:models.Paper,pid:str,pwd:str):
     return {'ok':False,'reason':'no such paper or bad passwd'}
 
 @app.post('/api/newPost')
-async def create_new_post(request: Request,content: str,challenge:str,response:str, image: UploadFile = File(...)):
+async def create_new_post(request:Request,content: str,captcha_token:str, image: UploadFile = File(...)):
     # 获取image字段的二进制数据
-    x_forwarded_for = request.headers.get("x-forwarded-for", default="")
-    #check captcha
-    c_res=libsolvemedia.SolveMedia(os.environ.get('s_ckey'), os.environ.get('s_vkey'),os.environ.get('s_hkey')).check_answer(x_forwarded_for,challenge,response)
-    if not c_res['is_valid']:
-        print(c_res)
-        return {'ok':False,"reason":'captcha:'+c_res['error']}
+    x_forwarded_for = request.headers.get('X-Forwarded-For','')
+    data = {
+        'response': captcha_token,
+        'secret': os.environ.get('HCAPTCHA_SECRET'),
+    }
+
+    response = requests.post('https://hcaptcha.com/siteverify', data=data)
+    if not response.json()['success']:
+        return {'ok':False,'reason':'captcha error'}
     image_data = await image.read()
 
     # 将image_data转为Buffer，并上传至其他API（示例中使用了requests库）
