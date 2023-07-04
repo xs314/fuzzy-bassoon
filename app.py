@@ -382,8 +382,12 @@ async def newPaper(paper:models.Paper):
     if not checkres[0]:
         return {"ok":False,"reason":checkres[1]}
     passwd=secrets.token_urlsafe()
-    res=db_papers.put({"value":paper.json(),"pass":passwd})['key']
-    return {"ok":True,"key":res,"pass":passwd}
+    cmpressed=paper.json()
+    size=len(cmpressed.encode('utf-8'))
+    if size>=384*1024:
+        return {"ok":False,"reason":"paper too large"}
+    res=db_papers.put({"value":cmpressed,"pass":passwd})['key']
+    return {"ok":True,"key":res,"pass":passwd,"usage":(size/384*1024)}
 
 @app.get('/api/getPaper/{paper_id}')
 async def read_paper_basic(paper_id):

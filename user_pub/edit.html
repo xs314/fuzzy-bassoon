@@ -124,10 +124,11 @@
       return false;
     }
 
-    if (paperJSON.length > 256 * 1024) {
-      alert("paperJSON 的字节大小不能超过 256KB。");
+    if (paperJSON.length > 384 * 1024) {
+      alert("paperJSON 太长。");
       return false;
     }
+
 
     for (const group of paper.groups) {
       if (group.count < group.passCount || group.count > group.questions.length) {
@@ -190,6 +191,7 @@
       if (data.ok) {
         prompt('试卷id，在机器人场景下使用', data.key);
         prompt('编辑密码，仅分享给信任用户，否则他人可以查看完整试卷', data.pass);
+        alert(`试卷存储使用率:${data.usage*100}%`)
       } else {
         alert(data.reason);
       }

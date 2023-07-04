@@ -146,11 +146,11 @@ def check_paper_validity(paper: Paper) -> Tuple[bool,str]:
             return [False,error_message]
 
     # Check paperJSON size constraint
-    paper_json_size = len(paper.json())
-    if paper_json_size > 256 * 1024:
-        error_message = "paperJSON size exceeds the maximum allowed size of 256KB."
+    # paper_json_size = len(paper.json())
+    # if paper_json_size > 256 * 1024:
+    #     error_message = "paperJSON size exceeds the maximum allowed size of 256KB."
         
-        return [False,error_message]
+    #     return [False,error_message]
 
     return [True,'']
 
