@@ -1,7 +1,16 @@
 from pydantic import BaseModel
 from typing import Union,List
 from enum import Enum
-
+class bottle_post(BaseModel):
+    content:str
+    from_user_id:int=0
+    from_vila_id:int=0
+    from_user_nick:str=''
+    from_room_id:int=0
+    send_at:int=0
+    msg_id:str=''
+    anon:bool=False
+    image_url:str=''
 
 class actions(str,Enum):
     accept='accept'

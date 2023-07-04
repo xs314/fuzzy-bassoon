@@ -14,16 +14,9 @@ from typing import Tuple,List,Dict
 import random,requests
 import base64
 from pydantic import BaseModel
-from models import Paper
+from models import Paper,bottle_post
 
-class bottle_post(BaseModel):
-    content:str
-    from_user_id:int
-    from_vila_id:int
-    from_user_nick:str
-    from_room_id:int
-    send_at:int
-    msg_id:str
+
 
 _log=logging.getLogger('utils')
 
@@ -57,7 +50,7 @@ async def put_bottle(evt:SendMessageEvent,bot:Bot)->str:
     content=' '.join(par.split('/扔漂流瓶')[1].split(' ')[1:])
     if not content:
         return '但是你什么也没说诶'
-    data=bottle_post(content=content,from_user_id=evt.from_user_id,from_vila_id=evt.villa_id,from_user_nick=evt.nickname,from_room_id=evt.room_id,send_at=evt.send_at,msg_id=evt.msg_uid)
+    data=bottle_post(content=content,from_user_id=evt.from_user_id,from_vila_id=evt.villa_id,from_user_nick=evt.nickname,from_room_id=evt.room_id,send_at=evt.send_at,msg_id=evt.msg_uid,anon=False)
     key=db_unaudited_bottles.put(data.dict(),expire_in=86400*7)['key']
     return f'投稿id:{key}'
 
@@ -91,7 +84,8 @@ async def moderate_accept(bottle_key:str,bot:Bot)->bool:
     db_unaudited_bottles.delete(bottle_key)
 
     bpp=bottle_post(**post)
-    await bot.send(bpp.from_vila_id,bpp.from_room_id,(Message(f'管理员接受了您的投稿#{bottle_key}').mention_user(bpp.from_vila_id,bpp.from_user_id).quote(bpp.msg_id,bpp.send_at)))
+    if not bpp.anon:
+        await bot.send(bpp.from_vila_id,bpp.from_room_id,(Message(f'管理员接受了您的投稿#{bottle_key}').mention_user(bpp.from_vila_id,bpp.from_user_id).quote(bpp.msg_id,bpp.send_at)))
     del post['key']
     del post['__expires']
     db_bottles.put(post,this_post)
@@ -111,14 +105,16 @@ async def random_bottle()-> str:
     if not item:
         return '超过5次请求无数据，这可能说明Bottles过于稀疏'
     else:
-        return f'>>>{item["key"]}\n'+item['content']
+        if 'image_url' in item and item['image_url']!='':
+            return Message(f'>>>{item["key"]}\nitem["content"]').image(item['image_url'])
+        return Message(f'>>>{item["key"]}\nitem["content"]')
     
 async def moderate_deny(bottle_key:str,reason:str,bot:Bot)->bool:
     #拒绝投稿
     if post:=db_unaudited_bottles.get(bottle_key):
         bpp=bottle_post(**post)
-
-        await bot.send(bpp.from_vila_id,bpp.from_room_id,(Message(f'管理员拒绝了您的投稿#{bottle_key}。理由如下：{reason}').mention_user(bpp.from_vila_id,bpp.from_user_id).quote(bpp.msg_id,bpp.send_at)))
+        if not bpp.anon:
+            await bot.send(bpp.from_vila_id,bpp.from_room_id,(Message(f'管理员拒绝了您的投稿#{bottle_key}。理由如下：{reason}').mention_user(bpp.from_vila_id,bpp.from_user_id).quote(bpp.msg_id,bpp.send_at)))
 
         db_unaudited_bottles.delete(bottle_key)
 

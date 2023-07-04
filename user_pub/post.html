@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>投稿页面</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://unpkg.com/cropperjs/dist/cropper.css">
+  <style>
+    .cropper-container {
+      max-height: 80vh; /* 最大高度为当前屏幕高度的80% */
+    }
+  </style>
+</head>
+<body>
+  <div class="container mt-4">
+    <h1>投稿页面</h1>
+    <form id="postForm" enctype="multipart/form-data">
+      <div class="mb-3">
+        <label for="content">文本内容：</label>
+        <textarea class="form-control" id="content" name="content" rows="5"></textarea>
+      </div>
+      <div class="mb-3">
+        <label for="image">图片内容：</label>
+        <input type="file" class="form-control" id="image" name="image" accept="image/*">
+      </div>
+      <div class="mb-3">
+        <div class="cropper-container">
+          <img id="cropperImage" src="" alt="裁剪图片">
+        </div>
+      </div>
+      <script type="text/javascript"
+      src="http://api.solvemedia.com/papi/challenge.script?k=H1y2wM6hPr9.VL2G68lRqisW35fugG.h">
+   </script>
+ 
+   <noscript>
+      <iframe src="http://api.solvemedia.com/papi/challenge.noscript?k=H1y2wM6hPr9.VL2G68lRqisW35fugG.h"
+        height="300" width="500" frameborder="0"></iframe><br/>
+      <textarea name="adcopy_challenge" rows="3" cols="40">
+      </textarea>
+      <input type="hidden" name="adcopy_response"
+        value="manual_challenge"/>
+   </noscript>
+      <button type="submit" class="btn btn-primary">提交</button>
+    </form>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://unpkg.com/cropperjs/dist/cropper.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      var image = document.getElementById('cropperImage');
+      var cropper;
+
+      // 初始化Cropper.js
+      function initCropper() {
+        if (cropper){cropper.destroy();}
+        var container = document.querySelector('.cropper-container');
+        var containerWidth = container.clientWidth;
+
+        cropper = new Cropper(image, {
+        
+          aspectRatio: NaN, // 不限制裁剪框比例
+          viewMode: 1,      // 显示裁剪框
+          dragMode: 'move', // 允许拖动裁剪框
+          autoCropArea: 0.5,  // 初始裁剪框大小占图片的比例，默认为图片完全显示
+          ready: function () {
+           
+                     },
+          crop: function (event) {
+            // 在这里可以监听裁剪框的变化
+          }
+        });
+      }
+
+      // 图片选择后加载到Cropper.js中
+      document.getElementById('image').addEventListener('change', function (event) {
+        var files = event.target.files;
+        var reader = new FileReader();
+        reader.onload = function (event) {
+          image.src = event.target.result;
+          
+          initCropper();
+        }
+        reader.readAsDataURL(files[0]);
+      });
+
+      // 提交表单
+      document.getElementById('postForm').addEventListener('submit', function (event) {
+        event.preventDefault();
+
+        // 获取裁剪后的图片数据
+        var canvas = cropper.getCroppedCanvas();
+        if (!canvas) {
+          return;
+        }
+        var croppedImage = canvas.toDataURL('image/jpeg');
+
+        // 创建一个FormData对象，并将文本和图片数据添加到表单中
+        var formData = new FormData();
+        formData.append('content', document.getElementById('content').value);
+        formData.append('image', dataURItoBlob(croppedImage));
+        formData.append('challenge', document.getElementById('adcopy_challenge').value);
+        formData.append('response', document.getElementById('adcopy_response').value);
+        // 使用fetch或其他方式将formData发送至后端API
+        // 注意替换成你实际的后端API地址
+        fetch('/api/newPost', {
+          method: 'POST',
+          body: formData
+        }).then((resp)=>{resp.json()}).then(function (response) {
+            if(response.ok){
+                prompt('投稿id',response.key)
+            }else{
+                alert(response.reason)
+            }
+          })
+          .catch(function (error) {
+            // 处理错误
+            console.error(error);
+          });
+      });
+
+      // 将base64格式的图片数据转为Blob对象
+      function dataURItoBlob(dataURI) {
+        var byteString = atob(dataURI.split(',')[1]);
+        var ab = new ArrayBuffer(byteString.length);
+        var ia = new Uint8Array(ab);
+        for (var i = 0; i < byteString.length; i++) {
+          ia[i] = byteString.charCodeAt(i);
+        }
+        return new Blob([ab], { type: 'image/jpeg' });
+      }
+    });
+  </script>
+</body>
+</html>

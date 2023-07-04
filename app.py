@@ -1,26 +1,27 @@
 from villa import Bot
 from villa.event import SendMessageEvent
 import os
-from fastapi import FastAPI
+from fastapi import FastAPI,File, UploadFile, Request
 from fastapi.staticfiles import StaticFiles
+from fastapi.responses import StreamingResponse
 import models
 import uvicorn
 import utils
 from deta import Deta
 
-import time,requests,json,random,secrets
+import time,requests,json,random,secrets,hashlib
 from pydantic import BaseModel
 from typing import Union
 from enum import Enum
-
-
+import libsolvemedia
 
 deta = Deta()
 db_papers=deta.Base('papers')
 db_attempts=deta.Base('attempts')
+db_unaudited_bottles=deta.Base('bottles_unaudited')
 db_vila_quizrole_cfg=deta.Base('vila_quizrole_cfg')
 db_vila_user_role_attempts=deta.Base('vila_user_role_att')
-
+img_db=deta.Drive('bottle_imgs')
 app = FastAPI()
 
 bot = Bot(bot_id=os.environ.get('bot_id'), bot_secret=os.environ.get('bot_secret'), callback_url=os.environ.get('bot_callback'),wait_util_complete=True)
@@ -489,6 +490,37 @@ async def newPaper(paper:models.Paper,pid:str,pwd:str):
             return {"ok":True,"key":pid,'usage':(size/(384*1024))}
     return {'ok':False,'reason':'no such paper or bad passwd'}
 
+@app.post('/api/newPost')
+async def create_new_post(request: Request,content: str,challenge:str,response:str, image: UploadFile = File(...)):
+    # 获取image字段的二进制数据
+    x_forwarded_for = request.headers.get("x-forwarded-for", default="")
+    #check captcha
+    c_res=libsolvemedia.SolveMedia(os.environ.get('s_ckey'), os.environ.get('s_vkey'),os.environ.get('s_hkey')).check_answer(x_forwarded_for,challenge,response)
+    if not c_res['is_valid']:
+        print(c_res)
+        return {'ok':False,"reason":'captcha:'+c_res['error']}
+    image_data = await image.read()
+
+    # 将image_data转为Buffer，并上传至其他API（示例中使用了requests库）
+    buffer_data = bytes(image_data)
+    if len(buffer_data)>1024*1024:
+        return {'ok':False,"reason":'image too large'}
+    name=hashlib.sha1(buffer_data).hexdigest()
+    if not img_db.get(name):
+        img_db.put(name,buffer_data)
+    #put data to posts unaudited
+    data=models.bottle_post(content=content,image_url=f'/img/{name}',from_user_nick=x_forwarded_for,anon=True)
+    key=db_unaudited_bottles.put(data.dict(),expire_in=86400*7)['key']
+    # 在这里进行其他处理或返回响应给前端
+    return {'ok':True,'key':key}
+
+@app.get("/img/{name}")
+async def get_image(name: str):
+    # 假设你有一个函数或方法来获取图像的Buffer
+    buffer = img_db.get(name)
+    
+    # 返回图像的Buffer
+    return StreamingResponse(buffer, media_type="image/jpeg")
 
 app.mount("/bvs85wi1qfb6o1eyrpqv3", StaticFiles(directory="admin_pub"), name="public")
 app.mount("/ui",StaticFiles(directory="user_pub"), name="ui")
