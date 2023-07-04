@@ -481,8 +481,12 @@ async def newPaper(paper:models.Paper,pid:str,pwd:str):
         return {"ok":False,"reason":checkres[1]}
     if dt:=db_papers.get(pid):
         if pwd==dt['pass']:
-            db_papers.update({"value":paper.json()},pid)
-            return {"ok":True,"key":pid}
+            cmpressed=paper.json()
+            size=len(cmpressed.encode('utf-8'))
+            if size>=384*1024:
+                return {"ok":False,"reason":"paper too large"}
+            db_papers.update({"value":cmpressed},pid)
+            return {"ok":True,"key":pid,'usage':(size/384*1024)}
     return {'ok':False,'reason':'no such paper or bad passwd'}
 
 
