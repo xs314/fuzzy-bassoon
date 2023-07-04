@@ -106,7 +106,7 @@ async def random_bottle()-> str:
         return '超过5次请求无数据，这可能说明Bottles过于稀疏'
     else:
         if 'image_url' in item and item['image_url']!='':
-            return Message(f'>>>{item["key"]}\nitem["content"]').image(item['image_url'])
+            return Message(f'>>>{item["key"]}\n{item["content"]}').image(item['image_url'])
         return Message(f'>>>{item["key"]}\nitem["content"]')
     
 async def moderate_deny(bottle_key:str,reason:str,bot:Bot)->bool:

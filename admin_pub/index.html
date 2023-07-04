@@ -198,6 +198,12 @@
         function showNextCard() {
             if (currentIndex < posts.length) {
                 cardContent.textContent = posts[currentIndex].content;
+                if('image_url' in posts[currentIndex] &&posts[currentIndex].image_url!=''){
+                    img=new Image(100,100)
+                    img.src=posts[currentIndex].image_url
+                    cardContent.appendChild(img)
+                }
+                
                 currentIndex++;
             } else {
                 // No more cards, handle accordingly
