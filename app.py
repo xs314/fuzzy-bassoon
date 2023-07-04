@@ -1,7 +1,7 @@
 from villa import Bot
 from villa.event import SendMessageEvent
 import os
-from fastapi import FastAPI,File, UploadFile, Request
+from fastapi import FastAPI,File, UploadFile, Request,Form
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import StreamingResponse
 import models
@@ -490,7 +490,7 @@ async def newPaper(paper:models.Paper,pid:str,pwd:str):
     return {'ok':False,'reason':'no such paper or bad passwd'}
 
 @app.post('/api/newPost')
-async def create_new_post(request:Request,content: str,captcha_token:str, image: UploadFile = File(...)):
+async def create_new_post(request:Request,content: str=Form(),captcha_token:str=Form(), image: UploadFile = File(...)):
     # 获取image字段的二进制数据
     x_forwarded_for = request.headers.get('X-Forwarded-For','')
     data = {
@@ -511,7 +511,7 @@ async def create_new_post(request:Request,content: str,captcha_token:str, image:
     if not img_db.get(name):
         img_db.put(name,buffer_data)
     #put data to posts unaudited
-    data=models.bottle_post(content=content,image_url=f'/img/{name}',from_user_nick=x_forwarded_for,anon=True)
+    data=models.bottle_post(content=content,image_url=f'{os.environ.get("root")}/img/{name}',from_user_nick=x_forwarded_for,anon=True)
     key=db_unaudited_bottles.put(data.dict(),expire_in=86400*7)['key']
     # 在这里进行其他处理或返回响应给前端
     return {'ok':True,'key':key}
@@ -519,7 +519,7 @@ async def create_new_post(request:Request,content: str,captcha_token:str, image:
 @app.get("/img/{name}")
 async def get_image(name: str):
     # 假设你有一个函数或方法来获取图像的Buffer
-    buffer = img_db.get(name)
+    buffer = img_db.get(name).iter_chunks()
     
     # 返回图像的Buffer
     return StreamingResponse(buffer, media_type="image/jpeg")

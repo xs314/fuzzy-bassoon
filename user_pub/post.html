@@ -104,13 +104,13 @@ var captcha_token;
         // 注意替换成你实际的后端API地址
         fetch('/api/newPost', {
           method: 'POST',
-          headers:{"Content-Type":'application/x-www-form-urlencoded'},
+          //headers:{"Content-Type":'multipart/form-data'},
           body: formData
-        }).then((resp)=>{resp.json()}).then(function (response) {
-            if(response.ok){
-                prompt('投稿id',response.key)
+        }).then((resp)=>resp.json()).then(function (resp) {
+            if(resp.ok){
+                prompt('投稿id',resp.key)
             }else{
-                alert(response.reason)
+                alert(resp.reason)
             }
           })
           .catch(function (error) {

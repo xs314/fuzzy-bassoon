@@ -22,3 +22,6 @@ micros:
         - name: HCAPTCHA_SECRET
           description : 'hc sec'
           default: ""
+        - name: root
+          description : 'https://xxxx rooturl'
+          default: ""
