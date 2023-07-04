@@ -124,10 +124,10 @@
       return false;
     }
 
-    if (paperJSON.length > 384 * 1024) {
-      alert("paperJSON 太长。");
-      return false;
-    }
+    // if (paperJSON.length > 256 * 1024) {
+    //   alert("paperJSON 的字节大小不能超过 256KB。");
+    //   return false;
+    // }
 
 
     for (const group of paper.groups) {
@@ -145,69 +145,6 @@
 }
 
 
-    function exportPaper() {
-      const paper = {
-        title: document.getElementById('title').value,
-        desc: document.getElementById('desc')._sceditor.val(),
-        passCount: Number(document.getElementById('passCount').value)??0,
-        time: Number(document.getElementById('time').value),
-        groups: []
-      };
-
-      const groupDivs = document.querySelectorAll('#group-container > .card');
-      groupDivs.forEach(groupDiv => {
-        const group = {
-          title: groupDiv.querySelector('#group-title').value,
-          desc: groupDiv.querySelector('#group-desc')._sceditor.val(),
-          count: Number(groupDiv.querySelector('#group-count').value),
-          passCount: Number(groupDiv.querySelector('#group-passCount').value),
-          questions: []
-        };
-
-        const questionDivs = groupDiv.querySelectorAll('#question-container > .mb-3');
-        questionDivs.forEach(questionDiv => {
-          const question = {
-            q: questionDiv.querySelector('#question')._sceditor.val(),
-            a: questionDiv.querySelector('#answer').value
-          };
-
-          group.questions.push(question);
-        });
-
-        paper.groups.push(group);
-      });
-
-      const paperJSON = JSON.stringify(paper);
-      if(validatePaperJSON(paperJSON)){
-        fetch('/api/newPaper', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    body: paperJSON
-  })
-    .then(response => response.json())
-    .then(data => {
-      if (data.ok) {
-        prompt('试卷id，在机器人场景下使用', data.key);
-        prompt('编辑密码，仅分享给信任用户，否则他人可以查看完整试卷', data.pass);
-        alert(`试卷存储使用率:${data.usage*100}%`)
-      } else {
-        alert(data.reason);
-      }
-    })
-    .catch(error => {
-      prompt('上传失败，这是原始json数据',paperJSON);
-      console.error('Error:', error);
-    });
-        
-      }else{
-
-      }
-      //validateJSON
-
-      // Perform further actions with the JSON, such as sending it to the server or saving it locally.
-    }
  function exportPaper(json_only=false) {
       const paper = {
         title: document.getElementById('title').value,
@@ -258,6 +195,7 @@
     .then(data => {
       if (data.ok) {
         prompt('试卷id，在机器人场景下使用', data.key);
+        alert(`试卷存储使用率:${data.usage*100}%`)
       } else {
         alert(data.reason);
       }
@@ -282,6 +220,7 @@
       if (data.ok) {
         prompt('试卷id，在机器人场景下使用', data.key);
         prompt('编辑密码，仅分享给信任用户，否则他人可以查看完整试卷', data.pass);
+        alert(`试卷存储使用率:${data.usage*100}%`)
       } else {
         alert(data.reason);
       }
