@@ -8,7 +8,7 @@ import models
 import uvicorn
 import utils
 from deta import Deta
-from urllib.parse import urlencode
+from urllib.parse import quote
 
 import time,requests,json,random,secrets,hashlib
 from pydantic import BaseModel
@@ -378,7 +378,7 @@ async def ytbsearch(event: SendMessageEvent):
     if not params:
         await event.send('ys need a title',mention_sender=True,quote_message=True)
         return
-    searchres=requests.get(f'https://draw-8fj-staging.begin.app/api/search/{urlencode(params)}').json()[0:5]
+    searchres=requests.get(f'https://draw-8fj-staging.begin.app/api/search/{quote(params)}').json()[0:5]
     content=''
     utils.put_cmd_state(['ysearch',event.villa_id,event.from_user_id],{'data':searchres})
     for n,i in enumerate(searchres):
