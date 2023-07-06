@@ -8,11 +8,22 @@ import models
 import uvicorn
 import utils
 from deta import Deta
+from urllib.parse import urlencode
 
 import time,requests,json,random,secrets,hashlib
 from pydantic import BaseModel
 from typing import Union
 from enum import Enum
+
+import pusher
+
+pusher_client = pusher.Pusher(
+  app_id='1630612',
+  key='927b889414bfe26dd56b',
+  secret='967315e5f88f94a587ad',
+  cluster='ap1',
+  ssl=True
+)
 
 deta = Deta()
 db_papers=deta.Base('papers')
@@ -360,6 +371,36 @@ async def setRole(event: SendMessageEvent):
         return
         
     
+#temp -----
+@bot.on_startswith("ys",prefix='/')
+async def ytbsearch(event: SendMessageEvent):
+    params=' '.join(event.message.get_plain_text().split('/ys')[1].split(' ')[1:])
+    if not params:
+        await event.send('ys need a title',mention_sender=True,quote_message=True)
+        return
+    searchres=requests.get(f'https://draw-8fj-staging.begin.app/api/search/{urlencode(params)}').json()[0:5]
+    content=''
+    utils.put_cmd_state(['ysearch',event.villa_id,event.from_user_id],{'data':searchres})
+    for n,i in enumerate(searchres):
+        content+=f'[#{n+1}] {i["title"]} - {i["duration_raw"]} ({i["snippet"]["publishedAt"]})\n'
+    content+='\n sl n to add'
+    await event.send(content,mention_sender=True,quote_message=True)
+    return
+
+@bot.on_startswith("l",prefix='/')
+async def loadp(event: SendMessageEvent):
+    params=int(event.message.get_plain_text().split('/redeemquizRole')[1].split(' ')[1])
+    data=utils.get_cmd_state(['ysearch',event.villa_id,event.from_user_id])
+    if not data:
+        await event.send('no data',mention_sender=True,quote_message=True)
+        return
+    data=data['data']
+    if params >len(data):
+        await event.send('no such data',mention_sender=True,quote_message=True)
+        return
+    id=data[params-1]['id']['videoId']
+    pusher_client.trigger(f'cache-{event.villa_id}-{event.room_id}','play',{'i':id,'u':event.nickname,'t':time.time()})
+    await event.send(f'ytp.html?{event.villa_id}-{event.room_id}',mention_sender=True,quote_message=True)
 
 
 #fastapi admintools

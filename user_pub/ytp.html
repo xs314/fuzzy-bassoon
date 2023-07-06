@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>YouTube Together</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <style>
+      
+    </style>
+</head>
+<body>
+    
+    <div id="player"></div>
+    <br>
+    <textarea id="chat" rows="10" cols="30" readonly="true">...</textarea>
+
+    <script src="https://js.pusher.com/7.2/pusher.min.js"></script>
+    <script>
+        // 提取频道名称
+        var channelName = window.location.hash.substr(1);
+        if (!channelName){
+            alert('#vid-rid')
+        }
+        var pusherChannel = 'cache-' + channelName;
+        var textarea=document.getElementById('chat')
+        // 载入 YouTube IFrame API
+        var tag = document.createElement('script');
+        tag.src = "https://www.youtube.com/iframe_api";
+        var firstScriptTag = document.getElementsByTagName('script')[0];
+        firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+
+        // 事件监听器
+        var player;
+        var pusher;
+        function addText(msg) {
+            msg = '\n' + msg
+            textarea.value += msg;
+
+
+            textarea.scrollTop = textarea.scrollHeight
+
+        }
+
+
+        // 播放器加载完成后初始化
+        function onYouTubeIframeAPIReady() {
+            Pusher.logToConsole = true;
+
+    pusher = new Pusher('927b889414bfe26dd56b', {
+    cluster: 'ap1'
+    });
+            player = new YT.Player('player', {
+                height: '240',
+                width: '320',
+                events: {
+                    'onReady': onPlayerReady
+                }
+            });
+        }
+
+        // 播放器准备就绪后开始播放
+        function onPlayerReady(event) {
+            var channel = pusher.subscribe(pusherChannel);
+        channel.bind('play', function (data) {
+            var currentTime = new Date().getTime() / 1000;
+            var timeDifference = currentTime - data.t;
+            
+            if (timeDifference >= 5) {
+                player.loadVideoById(data.i, timeDifference, "small");
+            } else {
+                player.loadVideoById(data.i,"small")
+            }
+            addText(`#${data.i}} - ${data.n}`)
+            event.target.playVideo();
+        });
+            
+           
+        }
+
+    </script>
+</body>
+</html>
