@@ -399,8 +399,8 @@ async def loadp(event: SendMessageEvent):
         await event.send('no such data',mention_sender=True,quote_message=True)
         return
     id=data[params-1]['id']['videoId']
-    pusher_client.trigger(f'cache-{event.villa_id}-{event.room_id}','play',{'i':id,'u':event.nickname,'t':time.time()})
-    await event.send(f'ytp.html?{event.villa_id}-{event.room_id}',mention_sender=True,quote_message=True)
+    pusher_client.trigger(f'cache-{event.villa_id}-{event.room_id}','play',{'i':id,'n':event.nickname,'t':time.time()})
+    await event.send(f'<host>/ui/ytp.html#{event.villa_id}-{event.room_id}',mention_sender=True,quote_message=True)
 
 
 #fastapi admintools
