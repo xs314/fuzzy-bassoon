@@ -387,9 +387,9 @@ async def ytbsearch(event: SendMessageEvent):
     await event.send(content,mention_sender=True,quote_message=True)
     return
 
-@bot.on_startswith("l",prefix='/')
+@bot.on_startswith("sl",prefix='/')
 async def loadp(event: SendMessageEvent):
-    params=int(event.message.get_plain_text().split('/l')[1].split(' ')[1])
+    params=int(event.message.get_plain_text().split('/sl')[1].split(' ')[1])
     data=utils.get_cmd_state(['ysearch',event.villa_id,event.from_user_id])
     if not data:
         await event.send('no data',mention_sender=True,quote_message=True)
@@ -401,6 +401,18 @@ async def loadp(event: SendMessageEvent):
     id=data[params-1]['id']['videoId']
     pusher_client.trigger(f'cache-{event.villa_id}-{event.room_id}','play',{'i':id,'n':event.nickname,'t':time.time()})
     await event.send(f'<host>/ui/ytp.html#{event.villa_id}-{event.room_id}',mention_sender=True,quote_message=True)
+
+@bot.on_startswith("yp",prefix='/')
+async def ytbsearch(event: SendMessageEvent):
+    params=' '.join(event.message.get_plain_text().split('/yp')[1].split(' ')[1:])
+    if not params:
+        await event.send('yp need a title',mention_sender=True,quote_message=True)
+        return
+    searchres=requests.get(f'https://draw-8fj-staging.begin.app/api/search/{quote(params)}').json()[0]
+    id=searchres['id']['videoId']
+    pusher_client.trigger(f'cache-{event.villa_id}-{event.room_id}','play',{'i':id,'n':event.nickname,'t':time.time()})
+    await event.send(f'<host>/ui/ytp.html#{event.villa_id}-{event.room_id}',mention_sender=True,quote_message=True)
+
 
 
 #fastapi admintools
