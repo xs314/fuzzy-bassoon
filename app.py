@@ -383,13 +383,13 @@ async def ytbsearch(event: SendMessageEvent):
     utils.put_cmd_state(['ysearch',event.villa_id,event.from_user_id],{'data':searchres})
     for n,i in enumerate(searchres):
         content+=f'[#{n+1}] {i["title"]} - {i["duration_raw"]} ({i["snippet"]["publishedAt"]})\n'
-    content+='\n sl n to add'
+    content+='\n l n to add'
     await event.send(content,mention_sender=True,quote_message=True)
     return
 
 @bot.on_startswith("l",prefix='/')
 async def loadp(event: SendMessageEvent):
-    params=int(event.message.get_plain_text().split('/redeemquizRole')[1].split(' ')[1])
+    params=int(event.message.get_plain_text().split('/l')[1].split(' ')[1])
     data=utils.get_cmd_state(['ysearch',event.villa_id,event.from_user_id])
     if not data:
         await event.send('no data',mention_sender=True,quote_message=True)
