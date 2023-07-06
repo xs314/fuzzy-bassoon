@@ -394,7 +394,7 @@ async def loadp(event: SendMessageEvent):
     if not data:
         await event.send('no data',mention_sender=True,quote_message=True)
         return
-    data=data['data']
+    data=data['data']['data']
     if params >len(data):
         await event.send('no such data',mention_sender=True,quote_message=True)
         return
